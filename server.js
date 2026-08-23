@@ -13,7 +13,9 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Karten-Pool (Beispiel: Rollen für Maskerade / Coup)
+// Speicher für alle aktiven Räume
+const rooms = {};
+
 const CARD_DECK = [
     "Kanzlerin", "Kanzlerin", "Kanzlerin",
     "Straßenräuber", "Straßenräuber", "Straßenräuber",
@@ -22,7 +24,9 @@ const CARD_DECK = [
     "Spion", "Spion", "Spion"
 ];
 
-let players = {}; // Speicher für verbundene Spieler
+function generateRoomCode() {
+    return Math.random().toString(36).substring(2, 6).toUpperCase();
+}
 
 function shuffle(array) {
     let deck = [...array];
@@ -34,62 +38,88 @@ function shuffle(array) {
 }
 
 io.on('connection', (socket) => {
-    console.log('Neuer Client verbunden:', socket.id);
 
-    // 1. Spieler tritt bei (Nur Name vergeben)
-    socket.on('join-game', (username) => {
-        players[socket.id] = {
+    // 1. Raum erstellen
+    socket.on('create-room', (username) => {
+        const roomCode = generateRoomCode();
+        rooms[roomCode] = {
+            code: roomCode,
+            players: {}
+        };
+
+        joinRoom(socket, roomCode, username);
+    });
+
+    // 2. Raum beitreten
+    socket.on('join-room', ({ roomCode, username }) => {
+        const code = roomCode.toUpperCase().trim();
+        if (!rooms[code]) {
+            return socket.emit('error-msg', 'Raum-Code nicht gefunden!');
+        }
+        joinRoom(socket, code, username);
+    });
+
+    function joinRoom(socket, roomCode, username) {
+        socket.join(roomCode);
+        socket.roomCode = roomCode;
+
+        rooms[roomCode].players[socket.id] = {
             id: socket.id,
             name: username || 'Spieler_' + socket.id.substr(0, 4),
             cards: []
         };
 
-        // Liste aller Spieler an alle senden
-        io.emit('update-players', Object.values(players));
-    });
-
-    // 2. WebRTC Signaling (Video / Audio Verbindungsaufbau)
-    socket.on('webrtc-offer', (data) => {
-        socket.to(data.target).emit('webrtc-offer', {
-            sdp: data.sdp,
-            caller: socket.id
+        // Bestätigung & Raum-Info an den neuen Spieler
+        socket.emit('room-joined', {
+            roomCode: roomCode,
+            players: Object.values(rooms[roomCode].players)
         });
+
+        // Allen anderen im selben Raum Bescheid geben
+        io.to(roomCode).emit('update-players', Object.values(rooms[roomCode].players));
+    }
+
+    // 3. WebRTC Video-Signaling (nur innerhalb desselben Raums)
+    socket.on('webrtc-offer', (data) => {
+        socket.to(data.target).emit('webrtc-offer', { sdp: data.sdp, caller: socket.id });
     });
 
     socket.on('webrtc-answer', (data) => {
-        socket.to(data.target).emit('webrtc-answer', {
-            sdp: data.sdp,
-            responder: socket.id
-        });
+        socket.to(data.target).emit('webrtc-answer', { sdp: data.sdp, responder: socket.id });
     });
 
     socket.on('webrtc-ice-candidate', (data) => {
-        socket.to(data.target).emit('webrtc-ice-candidate', {
-            candidate: data.candidate,
-            sender: socket.id
-        });
+        socket.to(data.target).emit('webrtc-ice-candidate', { candidate: data.candidate, sender: socket.id });
     });
 
-    // 3. Karten geben (Jeder sieht NUR seine eigenen Karten)
+    // 4. Karten verteilen (NUR im eigenen Raum)
     socket.on('start-game', () => {
-        const deck = shuffle(CARD_DECK);
-        
-        Object.keys(players).forEach((id) => {
-            // Jedem Spieler 2 Karten geben
-            players[id].cards = [deck.pop(), deck.pop()];
-            
-            // Exklusiv NUR an diesen einen Spieler senden!
-            io.to(id).emit('your-cards', players[id].cards);
-        });
+        const roomCode = socket.roomCode;
+        if (!roomCode || !rooms[roomCode]) return;
 
-        io.emit('game-status', 'Das Spiel hat begonnen! Die Karten wurden ausgeteilt.');
+        const deck = shuffle(CARD_DECK);
+        const roomPlayers = rooms[roomCode].players;
+
+        Object.keys(roomPlayers).forEach((id) => {
+            roomPlayers[id].cards = [deck.pop(), deck.pop()];
+            io.to(id).emit('your-cards', roomPlayers[id].cards);
+        });
     });
 
     // Trennung verarbeiten
     socket.on('disconnect', () => {
-        delete players[socket.id];
-        io.emit('update-players', Object.values(players));
-        io.emit('user-disconnected', socket.id);
+        const roomCode = socket.roomCode;
+        if (roomCode && rooms[roomCode]) {
+            delete rooms[roomCode].players[socket.id];
+            
+            // Wenn Raum leer ist, Raum löschen
+            if (Object.keys(rooms[roomCode].players).length === 0) {
+                delete rooms[roomCode];
+            } else {
+                io.to(roomCode).emit('update-players', Object.values(rooms[roomCode].players));
+                io.to(roomCode).emit('user-disconnected', socket.id);
+            }
+        }
     });
 });
 
