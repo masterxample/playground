@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Klassenspiel</title>
+  <title>Klassenspiel - Lobby & Spiel</title>
   <style>
     :root {
       --bg-color: #0f172a;
@@ -45,6 +45,31 @@
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     }
 
+    .hidden {
+      display: none !important;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    label {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    input, select {
+      background-color: #0f172a;
+      border: 1px solid var(--border-color);
+      color: white;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
     .btn {
       background-color: var(--accent-color);
       color: white;
@@ -66,6 +91,29 @@
       opacity: 0.6;
     }
 
+    .btn-success {
+      background-color: var(--success-color);
+    }
+
+    /* Spieler-Liste in der Lobby */
+    .lobby-player-list {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0;
+    }
+
+    .lobby-player-item {
+      background-color: #0f172a;
+      padding: 10px 15px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Spielbereich */
     .player-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -96,6 +144,7 @@
       border-radius: 4px;
     }
 
+    /* Aktionenliste */
     .action-list {
       display: flex;
       flex-direction: column;
@@ -185,99 +234,247 @@
 <div class="container">
   <h1>Klassenspiel</h1>
 
-  <!-- Raumeröffnung & Lobbysteuerung -->
-  <div class="card">
-    <h2>Lobby & Spielstart</h2>
-    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-      <button id="start-game-btn" class="btn">🚀 Spiel starten (Raumeröffner)</button>
+  <!-- ==================== ANSICHT 1: ANMELDUNG / RAUMERSTELLUNG ==================== -->
+  <div id="setup-screen" class="card">
+    <h2>Spiel betreten oder Raum erstellen</h2>
+    
+    <div class="form-group">
+      <label for="player-name-input">Dein Name:</label>
+      <input type="text" id="player-name-input" placeholder="Name eingeben..." value="Spieler 1">
     </div>
-    <div class="status-bar">
-      <div>Status: <span id="game-status" style="font-weight: bold; color: var(--accent-color);">Warten auf Start</span></div>
-      <div>Aktueller Zug: <span id="current-player-turn">-</span></div>
+
+    <hr style="border-color: var(--border-color); margin: 20px 0;">
+
+    <!-- Option A: Raum erstellen -->
+    <div style="margin-bottom: 20px;">
+      <h3>Neuen Raum erstellen (Raumeröffner)</h3>
+      <div class="form-group">
+        <label for="max-players-select">Maximale Spieleranzahl:</label>
+        <select id="max-players-select">
+          <option value="3">3 Spieler</option>
+          <option value="4" selected>4 Spieler</option>
+          <option value="5">5 Spieler</option>
+          <option value="6">6 Spieler</option>
+        </select>
+      </div>
+      <button id="create-room-btn" class="btn btn-success">Raum erstellen</button>
     </div>
-  </div>
 
-  <!-- Eigene Spielerübersicht -->
-  <div class="card">
-    <h2>Dein Profil</h2>
-    <div style="display: flex; gap: 20px; align-items: center;">
-      <div>Spieler: <strong id="my-name">Spieler 1 (Du)</strong></div>
-      <div>Position: <strong id="my-position">-</strong></div>
-      <div>Klasse: <span id="my-class-display">Noch keine</span></div>
-    </div>
-  </div>
-
-  <!-- Aktionen (Nur wählbar, wenn man am Zug ist) -->
-  <div class="card">
-    <h2>Aktionen</h2>
-    <p style="font-size: 14px; color: #94a3b8;">
-      Grün = Entspricht deiner echten Klasse | Rot = <strong style="color: var(--danger-color);">Bluff</strong>
-    </p>
-
-    <div class="action-list" id="action-container">
-      <!-- Dynamische Erzeugung der Aktions-Buttons -->
-    </div>
-  </div>
-
-  <!-- Spielfeld / Mitspieler -->
-  <div class="card">
-    <h2>Sitzordnung / Reihenfolge</h2>
-    <div class="player-grid" id="player-grid">
-      <!-- Dynamisch befüllt -->
+    <!-- Option B: Raum beitreten -->
+    <div>
+      <h3>Bestehendem Raum beitreten</h3>
+      <div class="form-group">
+        <label for="room-code-input">Raum-Code:</label>
+        <input type="text" id="room-code-input" placeholder="z.B. X7A9" style="text-transform: uppercase;">
+      </div>
+      <button id="join-room-btn" class="btn">Raum beitreten</button>
     </div>
   </div>
 
-  <!-- Ereignis-Log -->
-  <div class="card">
-    <h2>Spielprotokoll</h2>
-    <div id="log-box"></div>
+
+  <!-- ==================== ANSICHT 2: LOBBY (WARTEN AUF SPIELER) ==================== -->
+  <div id="lobby-screen" class="card hidden">
+    <h2>Lobby</h2>
+    <p>Raum-Code: <strong id="lobby-code-display" style="color: var(--accent-color); font-size: 18px;">-</strong></p>
+    
+    <h3>Anwesende Spieler (<span id="player-count">0</span>/<span id="max-player-count">0</span>):</h3>
+    <ul class="lobby-player-list" id="lobby-player-list">
+      <!-- Wird dynamisch gefüllt -->
+    </ul>
+
+    <div style="margin-top: 20px;" id="host-controls">
+      <button id="start-game-btn" class="btn btn-success">🚀 Spiel starten (Raumeröffner)</button>
+    </div>
+    <div id="guest-waiting-msg" class="hidden" style="color: #94a3b8; font-style: italic;">
+      Warten auf den Raumeröffner, um das Spiel zu starten...
+    </div>
   </div>
+
+
+  <!-- ==================== ANSICHT 3: LAUFENDES SPIEL ==================== -->
+  <div id="game-screen" class="hidden">
+    
+    <!-- Profil des aktuellen Spielers -->
+    <div class="card" style="margin-bottom: 20px;">
+      <h2>Dein Profil</h2>
+      <div style="display: flex; gap: 20px; align-items: center;">
+        <div>Spieler: <strong id="my-name-display">-</strong></div>
+        <div>Sitzposition: <strong id="my-position-display">-</strong></div>
+        <div>Klasse: <span id="my-class-display">-</span></div>
+      </div>
+    </div>
+
+    <!-- Zug-Status -->
+    <div class="card" style="margin-bottom: 20px;">
+      <div class="status-bar">
+        <div>Status: <span style="font-weight: bold; color: var(--success-color);">Spiel läuft</span></div>
+        <div>Aktuell am Zug: <span id="current-player-turn" style="font-weight: bold; color: var(--accent-color);">-</span></div>
+      </div>
+    </div>
+
+    <!-- Aktionen (Erst im Spiel sichtbar) -->
+    <div class="card" style="margin-bottom: 20px;">
+      <h2>Aktionen</h2>
+      <p style="font-size: 14px; color: #94a3b8;">
+        Grün = Deine Klasse | Rot = <strong style="color: var(--danger-color);">Bluff</strong>
+      </p>
+
+      <div class="action-list" id="action-container">
+        <!-- Dynamisch erzeugt -->
+      </div>
+    </div>
+
+    <!-- Sitzordnung & Reihenfolge (Erst im Spiel nach Auslosung sichtbar) -->
+    <div class="card" style="margin-bottom: 20px;">
+      <h2>Sitzordnung / Reihenfolge</h2>
+      <div class="player-grid" id="player-grid">
+        <!-- Dynamisch erzeugt nach Reihenfolge -->
+      </div>
+    </div>
+
+    <!-- Spielprotokoll -->
+    <div class="card">
+      <h2>Spielprotokoll</h2>
+      <div id="log-box"></div>
+    </div>
+
+  </div>
+
 </div>
 
 <script>
-  // Definition der bestehenden/ursprünglichen Klassen inkl. Symbolen und Aktionen
+  // Klassen-Definitionen
   const CLASSES = {
     CLASS_A: { name: 'Klasse A', icon: '🛡️', actionText: 'Standard-Aktion A ausführen' },
     CLASS_B: { name: 'Klasse B', icon: '⚔️', actionText: 'Standard-Aktion B ausführen' },
     SWAPPER: { name: 'Karten-Tauscher', icon: '🔄', actionText: 'Karten / Klasse austauschen' }
   };
 
-  // Spieler-Lobby
-  let players = [
-    { id: 1, name: 'Spieler 1 (Du)', isHost: true, classKey: null, position: null },
-    { id: 2, name: 'Spieler 2', isHost: false, classKey: null, position: null },
-    { id: 3, name: 'Spieler 3', isHost: false, classKey: null, position: null },
-    { id: 4, name: 'Spieler 4', isHost: false, classKey: null, position: null }
-  ];
-
-  const myId = 1;
+  // Anwendungs-State
+  let myId = null;
+  let isHost = false;
+  let roomCode = '';
+  let maxPlayers = 4;
   let gameStarted = false;
   let currentTurnIndex = 0;
 
+  let players = [];
+
   // DOM Elemente
+  const setupScreen = document.getElementById('setup-screen');
+  const lobbyScreen = document.getElementById('lobby-screen');
+  const gameScreen = document.getElementById('game-screen');
+
+  const playerNameInput = document.getElementById('player-name-input');
+  const maxPlayersSelect = document.getElementById('max-players-select');
+  const roomCodeInput = document.getElementById('room-code-input');
+  const createRoomBtn = document.getElementById('create-room-btn');
+  const joinRoomBtn = document.getElementById('join-room-btn');
+
+  const lobbyCodeDisplay = document.getElementById('lobby-code-display');
+  const playerCountEl = document.getElementById('player-count');
+  const maxPlayerCountEl = document.getElementById('max-player-count');
+  const lobbyPlayerList = document.getElementById('lobby-player-list');
+  const hostControls = document.getElementById('host-controls');
+  const guestWaitingMsg = document.getElementById('guest-waiting-msg');
   const startGameBtn = document.getElementById('start-game-btn');
-  const gameStatusEl = document.getElementById('game-status');
+
+  const myNameDisplay = document.getElementById('my-name-display');
+  const myPositionDisplay = document.getElementById('my-position-display');
+  const myClassDisplay = document.getElementById('my-class-display');
   const currentPlayerTurnEl = document.getElementById('current-player-turn');
-  const myPositionEl = document.getElementById('my-position');
-  const myClassDisplayEl = document.getElementById('my-class-display');
   const actionContainer = document.getElementById('action-container');
   const playerGrid = document.getElementById('player-grid');
   const logBox = document.getElementById('log-box');
 
-  window.addEventListener('DOMContentLoaded', () => {
-    updateUI();
+  // --- 1. RAUM ERSTELLEN ODER BEITRETEN ---
+
+  createRoomBtn.addEventListener('click', () => {
+    const name = playerNameInput.value.trim() || 'Spieler 1';
+    maxPlayers = parseInt(maxPlayersSelect.value, 10);
+    roomCode = generateRoomCode();
+    isHost = true;
+    myId = 1;
+
+    // Beispiel-Simulation von weiteren Mitspielern
+    players = [
+      { id: 1, name: name, isHost: true, classKey: null, position: null }
+    ];
+
+    // Zur Demonstration füllen wir weitere Beispiel-Spieler auf:
+    for (let i = 2; i <= maxPlayers; i++) {
+      players.push({ id: i, name: `Spieler ${i}`, isHost: false, classKey: null, position: null });
+    }
+
+    showLobby();
   });
 
-  // Nur der Raumeröffner kann das Spiel starten
+  joinRoomBtn.addEventListener('click', () => {
+    const name = playerNameInput.value.trim() || 'Gast-Spieler';
+    const code = roomCodeInput.value.trim().toUpperCase();
+
+    if (!code) {
+      alert('Bitte gib einen Raum-Code ein!');
+      return;
+    }
+
+    roomCode = code;
+    isHost = false;
+    myId = 2; // Beispiels-ID als Gast
+
+    players = [
+      { id: 1, name: 'Raumeröffner', isHost: true, classKey: null, position: null },
+      { id: 2, name: name, isHost: false, classKey: null, position: null },
+      { id: 3, name: 'Spieler 3', isHost: false, classKey: null, position: null }
+    ];
+    maxPlayers = 3;
+
+    showLobby();
+  });
+
+  function showLobby() {
+    setupScreen.classList.add('hidden');
+    lobbyScreen.classList.remove('hidden');
+
+    lobbyCodeDisplay.textContent = roomCode;
+    playerCountEl.textContent = players.length;
+    maxPlayerCountEl.textContent = maxPlayers;
+
+    if (isHost) {
+      hostControls.classList.remove('hidden');
+      guestWaitingMsg.classList.add('hidden');
+    } else {
+      hostControls.classList.add('hidden');
+      guestWaitingMsg.classList.remove('hidden');
+    }
+
+    renderLobbyPlayers();
+  }
+
+  function renderLobbyPlayers() {
+    lobbyPlayerList.innerHTML = '';
+    players.forEach(p => {
+      const li = document.createElement('li');
+      li.className = 'lobby-player-item';
+      li.innerHTML = `
+        <span><strong>${p.name}</strong> ${p.id === myId ? '(Du)' : ''}</span>
+        <span style="font-size: 12px; color: #94a3b8;">${p.isHost ? '👑 Raumeröffner' : 'Bereit'}</span>
+      `;
+      lobbyPlayerList.appendChild(li);
+    });
+  }
+
+  // --- 2. SPIEL STARTEN (NUR RAUMERÖFFNER) ---
+
   startGameBtn.addEventListener('click', () => {
+    if (!isHost) return;
     startNewGame();
   });
 
   function startNewGame() {
     gameStarted = true;
-    log('Das Spiel wurde vom Raumeröffner gestartet!');
 
-    // 1. Rollen/Klassen zufällig vergeben
+    // 1. Rollen/Klassen zufällig zuweisen
     const classKeys = Object.keys(CLASSES);
     let pool = [...classKeys];
 
@@ -287,7 +484,7 @@
       player.classKey = pool.splice(randomIndex, 1)[0];
     });
 
-    // 2. Zufällige Positionen auslosen & Spieler danach sortieren
+    // 2. Zufällige Sitzpositionen zuweisen & Spieler nach Position sortieren
     const positions = Array.from({ length: players.length }, (_, i) => i + 1);
     shuffleArray(positions);
 
@@ -295,15 +492,22 @@
       player.position = positions[index];
     });
 
-    // Sortierung nach Position
+    // Sortierung nach zugewiesener Position (Sitzordnung)
     players.sort((a, b) => a.position - b.position);
 
-    currentTurnIndex = 0;
-    gameStatusEl.textContent = 'Läuft';
+    currentTurnIndex = 0; // Der Spieler an Position 1 beginnt
 
-    log('Klassen wurden verteilt & zufällige Sitzpositionen zugewiesen.');
-    updateUI();
+    // Ansicht wechseln
+    lobbyScreen.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+
+    log('Das Spiel wurde vom Raumeröffner gestartet!');
+    log('Klassen wurden zugewiesen und die Sitzpositionen wurden ausgelost.');
+
+    updateGameUI();
   }
+
+  // --- 3. LAUFENDES SPIEL ---
 
   function getCurrentPlayer() {
     return players[currentTurnIndex];
@@ -313,7 +517,6 @@
     return gameStarted && getCurrentPlayer().id === myId;
   }
 
-  // Aktion ausführen
   function executeAction(requiredClassKey) {
     if (!isMyTurn()) return;
 
@@ -327,7 +530,7 @@
       log(`✅ <strong>${me.name}</strong> nutzt seine Klasse <em>${requiredClass.icon} ${requiredClass.name}</em>: <em>${requiredClass.actionText}</em>.`);
     }
 
-    // Spezial-Aktion: Karten tauschen (Nur wenn man am Zug ist)
+    // Spezial-Aktion: Karten tauschen
     if (requiredClassKey === 'SWAPPER') {
       const classKeys = Object.keys(CLASSES);
       const newClassKey = classKeys[Math.floor(Math.random() * classKeys.length)];
@@ -341,36 +544,28 @@
   function nextTurn() {
     currentTurnIndex = (currentTurnIndex + 1) % players.length;
     log(`Am Zug: ${getCurrentPlayer().name} (Pos. ${getCurrentPlayer().position})`);
-    updateUI();
+    updateGameUI();
   }
 
-  function updateUI() {
+  function updateGameUI() {
     const me = players.find(p => p.id === myId);
 
-    // Profilanzeige
+    // Mein Profil
     if (me && me.classKey) {
       const cls = CLASSES[me.classKey];
-      myClassDisplayEl.innerHTML = `${cls.icon} <strong>${cls.name}</strong>`;
-      myPositionEl.textContent = me.position ? `Nr. ${me.position}` : '-';
-    } else {
-      myClassDisplayEl.textContent = 'Noch keine';
-      myPositionEl.textContent = '-';
+      myNameDisplay.textContent = me.name;
+      myClassDisplay.innerHTML = `${cls.icon} <strong>${cls.name}</strong>`;
+      myPositionDisplay.textContent = `Nummer ${me.position}`;
     }
 
-    // Zuganzeige
-    if (gameStarted) {
-      const activePlayer = getCurrentPlayer();
-      currentPlayerTurnEl.textContent = `Pos. ${activePlayer.position}: ${activePlayer.name}`;
-      startGameBtn.disabled = true;
-    } else {
-      currentPlayerTurnEl.textContent = '-';
-      startGameBtn.disabled = false;
-    }
+    // Aktuell am Zug
+    const activePlayer = getCurrentPlayer();
+    currentPlayerTurnEl.textContent = `Pos. ${activePlayer.position}: ${activePlayer.name} ${activePlayer.id === myId ? '(Du)' : ''}`;
 
-    // Aktionenliste anzeigen
+    // Aktionenbereich erzeugen
     renderActions(me);
 
-    // Spielfeld/Spieler anzeigen
+    // Sitzordnung/Spielfeld erzeugen
     renderPlayerGrid();
   }
 
@@ -405,20 +600,32 @@
 
     players.forEach(p => {
       const card = document.createElement('div');
-      card.className = `player-card ${gameStarted && getCurrentPlayer().id === p.id ? 'active-turn' : ''}`;
+      card.className = `player-card ${getCurrentPlayer().id === p.id ? 'active-turn' : ''}`;
 
       const isSelf = p.id === myId;
       const cls = p.classKey ? CLASSES[p.classKey] : null;
       const displayClass = isSelf && cls ? `${cls.icon} ${cls.name}` : '❓ Verdeckt';
 
       card.innerHTML = `
-        <span class="position-badge">${p.position ? 'Pos. ' + p.position : 'Lobby'}</span>
-        <div style="font-weight: bold; margin-bottom: 5px;">${p.name}</div>
+        <span class="position-badge">Pos. ${p.position}</span>
+        <div style="font-weight: bold; margin-bottom: 5px;">${p.name} ${isSelf ? '(Du)' : ''}</div>
         <div style="font-size: 13px; color: #94a3b8;">Klasse: ${displayClass}</div>
       `;
 
       playerGrid.appendChild(card);
     });
+  }
+
+  // Helper-Funktionen
+  function generateRoomCode() {
+    return Math.random().toString(36).substring(2, 6).toUpperCase();
+  }
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
   }
 
   function log(message) {
@@ -427,13 +634,6 @@
     entry.innerHTML = `> ${message}`;
     logBox.appendChild(entry);
     logBox.scrollTop = logBox.scrollHeight;
-  }
-
-  function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
   }
 </script>
 </body>
