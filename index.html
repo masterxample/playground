@@ -11,32 +11,38 @@
         
         /* Start-Screen / Raum-Auswahl */
         #login-screen { position: absolute; inset: 0; background: #1a1a1a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; gap: 15px; padding: 20px; text-align: center; }
-        .input-group { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; }
-        input { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; text-align: center; text-transform: uppercase; }
-        input#username-input { text-transform: none; }
-        
+        .input-group { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; }
+        input, select { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; text-align: center; }
+        input#roomcode-input { text-transform: uppercase; }
+        label { text-align: left; font-size: 14px; color: #aaa; margin-bottom: -5px; }
+
         .btn { padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; color: white; }
         .btn-green { background: #28a745; }
         .btn-blue { background: #007bff; }
-        .divider { color: #666; font-size: 14px; margin: 5px 0; }
+        .divider { color: #666; font-size: 14px; margin: 10px 0; border-top: 1px solid #333; padding-top: 10px; }
 
-        /* Header mit Raum-Code */
-        #header { background: #181818; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-        #room-display { background: #333; padding: 5px 12px; border-radius: 6px; font-weight: bold; color: #ffc107; letter-spacing: 2px; }
+        /* Header mit Raum-Code und Status */
+        #header { background: #181818; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        .code-box { background: #222; border: 1px solid #ffc107; padding: 6px 14px; border-radius: 6px; font-weight: bold; color: #ffc107; letter-spacing: 2px; font-size: 18px; }
+        #status-info { color: #888; font-size: 14px; }
 
         /* Main Game Layout */
         #game-screen { display: flex; flex-direction: column; height: 100%; }
-        #video-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding: 10px; overflow-y: auto; align-content: center; }
-        .video-card { background: #222; border-radius: 10px; overflow: hidden; position: relative; aspect-ratio: 4/3; }
+        #video-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding: 15px; overflow-y: auto; align-content: center; }
+        
+        /* Player Card Slots */
+        .slot-card { background: #1e1e1e; border: 2px dashed #444; border-radius: 12px; overflow: hidden; position: relative; aspect-ratio: 4/3; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .slot-card.active { border: 2px solid #28a745; background: #222; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .player-name { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 3px 8px; border-radius: 4px; font-size: 12px; }
+        .player-name { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; }
+        .waiting-text { color: #666; font-size: 14px; font-style: italic; text-align: center; padding: 10px; }
 
         /* Secret Cards Area */
-        #hand-area { background: #1e1e1e; padding: 15px; border-top: 2px solid #333; text-align: center; }
+        #hand-area { background: #181818; padding: 15px; border-top: 2px solid #333; text-align: center; }
         .cards-container { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
-        .card { background: #ff4757; color: white; padding: 15px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .card { background: #ff4757; color: white; padding: 15px 22px; border-radius: 8px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.4); }
         
-        #controls { padding: 10px; background: #181818; display: flex; justify-content: center; }
+        #controls { padding: 10px; background: #121212; display: flex; justify-content: center; }
     </style>
 </head>
 <body>
@@ -46,9 +52,19 @@
         <h2>Maskerade Lobby</h2>
         <div class="input-group">
             <input type="text" id="username-input" placeholder="Dein Name..." maxlength="15">
+            
+            <label for="max-players-select">Spieleranzahl für neuen Raum:</label>
+            <select id="max-players-select">
+                <option value="2">2 Spieler</option>
+                <option value="3">3 Spieler</option>
+                <option value="4" selected>4 Spieler</option>
+                <option value="5">5 Spieler</option>
+                <option value="6">6 Spieler</option>
+            </select>
+            
             <button class="btn btn-green" onclick="createRoom()">Neuen Raum erstellen</button>
             
-            <div class="divider">oder bestehendem Raum beitreten:</div>
+            <div class="divider">ODER EINEM RAUM BEITRETEN</div>
             
             <input type="text" id="roomcode-input" placeholder="4-stelliger Raum-Code" maxlength="4">
             <button class="btn btn-blue" onclick="joinRoom()">Raum beitreten</button>
@@ -58,56 +74,61 @@
     <!-- Spieloberfläche -->
     <div id="game-screen">
         <div id="header">
-            <span>Maskerade</span>
-            <div>RAUM-CODE: <span id="room-display">----</span></div>
+            <div>
+                <span style="font-weight: bold;">RAUM-CODE:</span>
+                <span id="room-display" class="code-box">----</span>
+            </div>
+            <div id="status-info">Warte auf Mitspieler...</div>
         </div>
 
         <div id="video-grid"></div>
 
         <div id="controls">
-            <button class="btn btn-blue" onclick="startGame()">Karten neu geben</button>
+            <button id="start-btn" class="btn btn-green" onclick="startGame()">Karten neu geben</button>
         </div>
 
         <div id="hand-area">
             <h3>Deine geheimen Handkarten:</h3>
             <div id="cards-container" class="cards-container">
-                <span style="color: #888;">Warte auf Kartenvergabe...</span>
+                <span style="color: #666;">Noch keine Karten ausgegeben.</span>
             </div>
         </div>
     </div>
 
     <script>
         const socket = io();
-        let localStream;
+        let localStream = null;
         const peers = {};
         const videoGrid = document.getElementById('video-grid');
 
+        // Kamera initialisieren
         async function initCamera() {
+            if (localStream) return true;
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                addVideoStream(socket.id, 'Du', localStream, true);
+                return true;
             } catch (err) {
-                alert("Kamera/Mikrofon konnte nicht aktiviert werden.");
+                console.warn("Kamera/Mikrofon nicht verknüpft oder abgelehnt:", err);
+                return false;
             }
         }
 
-        function createRoom() {
+        async function createRoom() {
             const name = document.getElementById('username-input').value.trim();
+            const maxPlayers = document.getElementById('max-players-select').value;
             if (!name) return alert("Bitte gib einen Namen ein!");
             
-            initCamera().then(() => {
-                socket.emit('create-room', name);
-            });
+            await initCamera();
+            socket.emit('create-room', { username: name, maxPlayers: maxPlayers });
         }
 
-        function joinRoom() {
+        async function joinRoom() {
             const name = document.getElementById('username-input').value.trim();
             const code = document.getElementById('roomcode-input').value.trim();
             if (!name || !code) return alert("Bitte Name und Raum-Code eingeben!");
             
-            initCamera().then(() => {
-                socket.emit('join-room', { roomCode: code, username: name });
-            });
+            await initCamera();
+            socket.emit('join-room', { roomCode: code, username: name });
         }
 
         socket.on('room-joined', (data) => {
@@ -119,41 +140,62 @@
             alert(msg);
         });
 
-        function startGame() {
-            socket.emit('start-game');
-        }
+        // Warteraum & Plätze aktualisieren
+        socket.on('update-room-state', (data) => {
+            const { maxPlayers, players } = data;
 
-        // --- WebRTC Video Stream Logik ---
-        function addVideoStream(peerId, name, stream, isMuted = false) {
-            if (document.getElementById(`video-${peerId}`)) return;
+            // Status-Text in Kopfzeile
+            const statusEl = document.getElementById('status-info');
+            statusEl.innerText = `Spieler: ${players.length} / ${maxPlayers}`;
 
-            const card = document.createElement('div');
-            card.className = 'video-card';
-            card.id = `video-${peerId}`;
+            // Video-Grid leeren und genau 'maxPlayers' Plätze (Slots) anlegen
+            videoGrid.innerHTML = '';
 
-            const video = document.createElement('video');
-            video.srcObject = stream;
-            video.autoplay = true;
-            video.playsInline = true;
-            if (isMuted) video.muted = true;
+            for (let i = 0; i < maxPlayers; i++) {
+                const player = players[i];
+                const slot = document.createElement('div');
 
-            const label = document.createElement('div');
-            label.className = 'player-name';
-            label.innerText = name;
+                if (player) {
+                    slot.className = 'slot-card active';
+                    slot.id = `slot-${player.id}`;
 
-            card.appendChild(video);
-            card.appendChild(label);
-            videoGrid.appendChild(card);
-        }
+                    const label = document.createElement('div');
+                    label.className = 'player-name';
+                    label.innerText = player.id === socket.id ? `${player.name} (Du)` : player.name;
 
-        socket.on('update-players', (playerList) => {
-            playerList.forEach(player => {
-                if (player.id !== socket.id && !peers[player.id]) {
-                    createPeerConnection(player.id, player.name, true);
+                    // Wenn es der eigene Stream ist:
+                    if (player.id === socket.id) {
+                        if (localStream) {
+                            const video = document.createElement('video');
+                            video.srcObject = localStream;
+                            video.autoplay = true;
+                            video.playsInline = true;
+                            video.muted = true;
+                            slot.appendChild(video);
+                        } else {
+                            slot.innerHTML = `<span style="color:#aaa;">Kamera aus</span>`;
+                        }
+                    } else {
+                        // Platzhalter für Mitspieler, bis WebRTC steht
+                        slot.innerHTML = `<span style="color:#aaa;">Verbinde Video...</span>`;
+                        
+                        // Peer Connection herstellen
+                        if (!peers[player.id]) {
+                            createPeerConnection(player.id, player.name, true);
+                        }
+                    }
+                    slot.appendChild(label);
+                } else {
+                    // Leerer Platz im Warteraum
+                    slot.className = 'slot-card';
+                    slot.innerHTML = `<div class="waiting-text">Warte auf Spieler ${i + 1}...</div>`;
                 }
-            });
+
+                videoGrid.appendChild(slot);
+            }
         });
 
+        // --- WebRTC Video & Audio ---
         function createPeerConnection(targetId, targetName, isInitiator) {
             const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
             peers[targetId] = pc;
@@ -162,7 +204,7 @@
                 localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
             }
 
-            pc.ontrack = (event) => addVideoStream(targetId, targetName, event.streams[0]);
+            pc.ontrack = (event) => attachRemoteStream(targetId, targetName, event.streams[0]);
             pc.onicecandidate = (event) => {
                 if (event.candidate) socket.emit('webrtc-ice-candidate', { target: targetId, candidate: event.candidate });
             };
@@ -183,7 +225,7 @@
                 localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
             }
 
-            pc.ontrack = (event) => addVideoStream(data.caller, 'Mitspieler', event.streams[0]);
+            pc.ontrack = (event) => attachRemoteStream(data.caller, 'Mitspieler', event.streams[0]);
             pc.onicecandidate = (event) => {
                 if (event.candidate) socket.emit('webrtc-ice-candidate', { target: data.caller, candidate: event.candidate });
             };
@@ -207,14 +249,34 @@
             }
         });
 
+        function attachRemoteStream(peerId, name, stream) {
+            const slot = document.getElementById(`slot-${peerId}`);
+            if (slot) {
+                slot.innerHTML = '';
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.autoplay = true;
+                video.playsInline = true;
+
+                const label = document.createElement('div');
+                label.className = 'player-name';
+                label.innerText = name;
+
+                slot.appendChild(video);
+                slot.appendChild(label);
+            }
+        }
+
         socket.on('user-disconnected', (id) => {
             if (peers[id]) {
                 peers[id].close();
                 delete peers[id];
             }
-            const el = document.getElementById(`video-${id}`);
-            if (el) el.remove();
         });
+
+        function startGame() {
+            socket.emit('start-game');
+        }
 
         // Geheime Handkarten empfangen
         socket.on('your-cards', (cards) => {
