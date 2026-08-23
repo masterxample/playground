@@ -7,16 +7,27 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-app.use(express.static(path.join(__dirname, 'public')));
+// Absoluter Pfad zum public-Ordner für Render
+const publicPath = path.join(__dirname, 'public');
+app.use(express.static(publicPath));
+
+// Explizites Routing für die Startseite
+app.get('/', (req, res) => {
+    res.sendFile(path.join(publicPath, 'index.html'));
+});
 
 io.on('connection', (socket) => {
     socket.on('join-game', (username) => {
         socket.username = username;
         io.emit('chat-message', `${username} ist dem Spiel beigetreten.`);
     });
+
+    socket.on('game-action', (action) => {
+        io.emit('action-broadcast', { user: socket.username || 'Anonym', action: action });
+    });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+const PORT = process.env.PORT || 10000;
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server läuft auf Port ${PORT}`);
 });
