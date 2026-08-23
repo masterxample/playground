@@ -3,58 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Maskerade - Webcam Spielraum</title>
+    <title>Maskerade - Raum-System</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Arial, sans-serif; background-color: #121212; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Login Screen */
-        #login-screen { position: absolute; inset: 0; background: #1a1a1a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; gap: 15px; }
-        #login-screen input { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; text-align: center; }
-        #login-screen button { padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; border: none; background: #28a745; color: white; cursor: pointer; }
+        /* Start-Screen / Raum-Auswahl */
+        #login-screen { position: absolute; inset: 0; background: #1a1a1a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; gap: 15px; padding: 20px; text-align: center; }
+        .input-group { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; }
+        input { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; text-align: center; text-transform: uppercase; }
+        input#username-input { text-transform: none; }
+        
+        .btn { padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; color: white; }
+        .btn-green { background: #28a745; }
+        .btn-blue { background: #007bff; }
+        .divider { color: #666; font-size: 14px; margin: 5px 0; }
+
+        /* Header mit Raum-Code */
+        #header { background: #181818; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        #room-display { background: #333; padding: 5px 12px; border-radius: 6px; font-weight: bold; color: #ffc107; letter-spacing: 2px; }
 
         /* Main Game Layout */
         #game-screen { display: flex; flex-direction: column; height: 100%; }
-        
-        /* Video Grid */
-        #video-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; padding: 10px; overflow-y: auto; align-content: center; }
-        .video-card { background: #222; border-radius: 10px; overflow: hidden; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 4/3; }
+        #video-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding: 10px; overflow-y: auto; align-content: center; }
+        .video-card { background: #222; border-radius: 10px; overflow: hidden; position: relative; aspect-ratio: 4/3; }
         video { width: 100%; height: 100%; object-fit: cover; }
         .player-name { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 3px 8px; border-radius: 4px; font-size: 12px; }
 
-        /* Secret Cards Area (Bottom) */
+        /* Secret Cards Area */
         #hand-area { background: #1e1e1e; padding: 15px; border-top: 2px solid #333; text-align: center; }
         .cards-container { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
-        .card { background: #ff4757; color: white; padding: 15px 20px; border-radius: 8px; font-weight: bold; border: 2px solid #ffffff33; box-shadow: 0 4px 6px rgba(0,0,0,0.3); font-size: 14px; }
+        .card { background: #ff4757; color: white; padding: 15px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         
-        /* Controls */
-        #controls { padding: 10px; background: #181818; display: flex; justify-content: center; gap: 10px; }
-        button.action-btn { padding: 10px 16px; border-radius: 6px; border: none; background: #007bff; color: white; font-weight: bold; cursor: pointer; }
+        #controls { padding: 10px; background: #181818; display: flex; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <!-- Login ohne Account -->
+    <!-- Start-Screen -->
     <div id="login-screen">
-        <h2>Willkommen bei Maskerade</h2>
-        <input type="text" id="username-input" placeholder="Dein Name..." maxlength="15">
-        <button onclick="joinGame()">Spielraum betreten</button>
+        <h2>Maskerade Lobby</h2>
+        <div class="input-group">
+            <input type="text" id="username-input" placeholder="Dein Name..." maxlength="15">
+            <button class="btn btn-green" onclick="createRoom()">Neuen Raum erstellen</button>
+            
+            <div class="divider">oder bestehendem Raum beitreten:</div>
+            
+            <input type="text" id="roomcode-input" placeholder="4-stelliger Raum-Code" maxlength="4">
+            <button class="btn btn-blue" onclick="joinRoom()">Raum beitreten</button>
+        </div>
     </div>
 
     <!-- Spieloberfläche -->
     <div id="game-screen">
+        <div id="header">
+            <span>Maskerade</span>
+            <div>RAUM-CODE: <span id="room-display">----</span></div>
+        </div>
+
         <div id="video-grid"></div>
 
         <div id="controls">
-            <button class="action-btn" onclick="startGame()">Karten neu geben</button>
+            <button class="btn btn-blue" onclick="startGame()">Karten neu geben</button>
         </div>
 
-        <!-- Eigene Handkarten (Nur für mich sichtbar) -->
         <div id="hand-area">
             <h3>Deine geheimen Handkarten:</h3>
             <div id="cards-container" class="cards-container">
-                <span style="color: #888;">Noch keine Karten ausgeteilt.</span>
+                <span style="color: #888;">Warte auf Kartenvergabe...</span>
             </div>
         </div>
     </div>
@@ -65,25 +82,42 @@
         const peers = {};
         const videoGrid = document.getElementById('video-grid');
 
-        // Kamera & Mikrofon beim Start anfordern
         async function initCamera() {
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 addVideoStream(socket.id, 'Du', localStream, true);
             } catch (err) {
-                alert("Kamera/Mikrofon-Zugriff verweigert oder nicht verfügbar. Bitte im Browser erlauben.");
+                alert("Kamera/Mikrofon konnte nicht aktiviert werden.");
             }
         }
 
-        function joinGame() {
+        function createRoom() {
             const name = document.getElementById('username-input').value.trim();
             if (!name) return alert("Bitte gib einen Namen ein!");
             
-            document.getElementById('login-screen').style.display = 'none';
             initCamera().then(() => {
-                socket.emit('join-game', name);
+                socket.emit('create-room', name);
             });
         }
+
+        function joinRoom() {
+            const name = document.getElementById('username-input').value.trim();
+            const code = document.getElementById('roomcode-input').value.trim();
+            if (!name || !code) return alert("Bitte Name und Raum-Code eingeben!");
+            
+            initCamera().then(() => {
+                socket.emit('join-room', { roomCode: code, username: name });
+            });
+        }
+
+        socket.on('room-joined', (data) => {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('room-display').innerText = data.roomCode;
+        });
+
+        socket.on('error-msg', (msg) => {
+            alert(msg);
+        });
 
         function startGame() {
             socket.emit('start-game');
@@ -101,7 +135,7 @@
             video.srcObject = stream;
             video.autoplay = true;
             video.playsInline = true;
-            if (isMuted) video.muted = true; // Eigenen Ton stummschalten
+            if (isMuted) video.muted = true;
 
             const label = document.createElement('div');
             label.className = 'player-name';
@@ -112,7 +146,6 @@
             videoGrid.appendChild(card);
         }
 
-        // Neue Spieler verbinden
         socket.on('update-players', (playerList) => {
             playerList.forEach(player => {
                 if (player.id !== socket.id && !peers[player.id]) {
@@ -122,23 +155,16 @@
         });
 
         function createPeerConnection(targetId, targetName, isInitiator) {
-            const pc = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-            });
+            const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
             peers[targetId] = pc;
 
             if (localStream) {
                 localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
             }
 
-            pc.ontrack = (event) => {
-                addVideoStream(targetId, targetName, event.streams[0]);
-            };
-
+            pc.ontrack = (event) => addVideoStream(targetId, targetName, event.streams[0]);
             pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('webrtc-ice-candidate', { target: targetId, candidate: event.candidate });
-                }
+                if (event.candidate) socket.emit('webrtc-ice-candidate', { target: targetId, candidate: event.candidate });
             };
 
             if (isInitiator) {
@@ -157,14 +183,9 @@
                 localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
             }
 
-            pc.ontrack = (event) => {
-                addVideoStream(data.caller, 'Mitspieler', event.streams[0]);
-            };
-
+            pc.ontrack = (event) => addVideoStream(data.caller, 'Mitspieler', event.streams[0]);
             pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('webrtc-ice-candidate', { target: data.caller, candidate: event.candidate });
-                }
+                if (event.candidate) socket.emit('webrtc-ice-candidate', { target: data.caller, candidate: event.candidate });
             };
 
             await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
@@ -195,7 +216,7 @@
             if (el) el.remove();
         });
 
-        // --- Geheime Karten-Empfang (Nur für MICH) ---
+        // Geheime Handkarten empfangen
         socket.on('your-cards', (cards) => {
             const container = document.getElementById('cards-container');
             container.innerHTML = '';
