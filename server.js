@@ -5,134 +5,166 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server);
 
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname)));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+// ============ Klassen-Definition (serverseitig) ============
+// Namen hier einfach umbenennen — der Rest des Codes bleibt gleich,
+// solange die Keys (kanzlerin, kaperin, ...) konsistent bleiben.
+const CLASS_KEYS = ['kanzler', 'strassenraeuber', 'bluthund', 'bodyguard', 'spion'];
+const COPIES_PER_CLASS = 3; // wie im Original-Spiel: 3 Kopien je Klasse im Deck
 
-const rooms = {};
+// Aktionen: classKey = welche Klasse diese Aktion "abdeckt" (für Bluff-Erkennung).
+// classKey: null = jeder darf das ohne zu bluffen (Basis-Aktion).
+// Hinweis: Bodyguard hat keine eigene Aktion (blockt nur Anschlag) — Block-Logik folgt später.
+const ACTION_DEFS = {
+  einkommen:     { label: 'Einkommen',      classKey: null,              needsTarget: false, isSwap: false },
+  fremde_hilfe:  { label: 'Fremde Hilfe',   classKey: null,              needsTarget: false, isSwap: false },
+  staatsstreich: { label: 'Staatsstreich',  classKey: null,              needsTarget: true,  isSwap: false },
+  steuer:        { label: 'Steuer',         classKey: 'kanzler',         needsTarget: false, isSwap: false },
+  raubzug:       { label: 'Raubzug',        classKey: 'strassenraeuber', needsTarget: true,  isSwap: false },
+  anschlag:      { label: 'Anschlag',       classKey: 'bluthund',        needsTarget: true,  isSwap: false },
+  tausch:        { label: 'Tausch',         classKey: 'spion',           needsTarget: false, isSwap: true  }
+};
 
-const CARD_DECK = [
-    "Kanzlerin", "Kanzlerin", "Kanzlerin",
-    "Straßenräuber", "Straßenräuber", "Straßenräuber",
-    "Bluthund", "Bluthund", "Bluthund",
-    "Bodyguard", "Bodyguard", "Bodyguard",
-    "Spion", "Spion", "Spion"
-];
-
-function generateRoomCode() {
-    return Math.random().toString(36).substring(2, 6).toUpperCase();
+function buildDeck() {
+  let deck = [];
+  CLASS_KEYS.forEach(k => { for (let i = 0; i < COPIES_PER_CLASS; i++) deck.push(k); });
+  return shuffle(deck);
+}
+function shuffle(arr) {
+  arr = arr.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function roomCodeGen() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c = '';
+  for (let i = 0; i < 4; i++) c += chars[Math.floor(Math.random() * chars.length)];
+  return c;
 }
 
-function shuffle(array) {
-    let deck = [...array];
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    return deck;
+const rooms = {}; // code -> room
+
+function publicRoomState(room) {
+  return {
+    code: room.code,
+    maxPlayers: room.maxPlayers,
+    started: room.started,
+    hostId: room.hostId,
+    turnIndex: room.turnIndex,
+    players: room.players.map(p => ({ id: p.id, name: p.name, position: p.position }))
+  };
+}
+function broadcastRoom(room) {
+  io.to(room.code).emit('roomUpdate', publicRoomState(room));
 }
 
 io.on('connection', (socket) => {
 
-    socket.on('create-room', ({ username, maxPlayers }) => {
-        const roomCode = generateRoomCode();
-        const max = parseInt(maxPlayers) || 4;
+  socket.on('createRoom', ({ name, maxPlayers }) => {
+    const code = roomCodeGen();
+    const room = {
+      code,
+      hostId: socket.id,
+      maxPlayers: Math.max(2, Math.min(6, parseInt(maxPlayers, 10) || 4)),
+      started: false,
+      players: [],
+      turnIndex: 0,
+      deck: []
+    };
+    room.players.push({ id: socket.id, name: (name || 'Spieler').slice(0, 20), position: null, classes: [] });
+    rooms[code] = room;
+    socket.join(code);
+    socket.data.roomCode = code;
+    socket.emit('joined', { code, youAreHost: true });
+    broadcastRoom(room);
+  });
 
-        rooms[roomCode] = {
-            code: roomCode,
-            maxPlayers: max,
-            players: {}
-        };
+  socket.on('joinRoom', ({ name, code }) => {
+    const room = rooms[(code || '').toUpperCase()];
+    if (!room) { socket.emit('errorMsg', 'Raum nicht gefunden.'); return; }
+    if (room.started) { socket.emit('errorMsg', 'Das Spiel läuft bereits.'); return; }
+    if (room.players.length >= room.maxPlayers) { socket.emit('errorMsg', 'Der Raum ist voll.'); return; }
+    room.players.push({ id: socket.id, name: (name || 'Spieler').slice(0, 20), position: null, classes: [] });
+    socket.join(room.code);
+    socket.data.roomCode = room.code;
+    socket.emit('joined', { code: room.code, youAreHost: false });
+    broadcastRoom(room);
+  });
 
-        joinRoom(socket, roomCode, username);
-    });
+  socket.on('startGame', () => {
+    const room = rooms[socket.data.roomCode];
+    if (!room || room.hostId !== socket.id || room.started) return;
+    if (room.players.length < 2) { socket.emit('errorMsg', 'Mindestens 2 Spieler nötig.'); return; }
 
-    socket.on('join-room', ({ roomCode, username }) => {
-        const code = (roomCode || '').toUpperCase().trim();
-        if (!rooms[code]) {
-            return socket.emit('error-msg', 'Raum-Code nicht gefunden!');
-        }
+    room.started = true;
+    room.deck = buildDeck();
 
-        const currentCount = Object.keys(rooms[code].players).length;
-        if (currentCount >= rooms[code].maxPlayers) {
-            return socket.emit('error-msg', 'Dieser Raum ist bereits voll!');
-        }
+    // Reihenfolge auslosen
+    const order = shuffle(room.players.map((_, i) => i));
+    order.forEach((playerIdx, pos) => { room.players[playerIdx].position = pos + 1; });
+    room.players.sort((a, b) => a.position - b.position);
 
-        joinRoom(socket, code, username);
-    });
+    // Klassen zuteilen (2 je Spieler)
+    room.players.forEach(p => { p.classes = [room.deck.pop(), room.deck.pop()]; });
 
-    function joinRoom(socket, roomCode, username) {
-        socket.join(roomCode);
-        socket.roomCode = roomCode;
+    room.turnIndex = 0;
+    io.to(room.code).emit('gameStarted', publicRoomState(room));
+    room.players.forEach(p => io.to(p.id).emit('yourClasses', p.classes));
+    io.to(room.code).emit('log', 'Das Spiel wurde gestartet. Klassen und Reihenfolge wurden ausgelost.');
+  });
 
-        rooms[roomCode].players[socket.id] = {
-            id: socket.id,
-            name: username || 'Spieler_' + socket.id.substr(0, 4),
-            cards: []
-        };
+  socket.on('declareAction', ({ actionKey, targetId }) => {
+    const room = rooms[socket.data.roomCode];
+    if (!room || !room.started) return;
+    const actor = room.players[room.turnIndex];
+    if (!actor || actor.id !== socket.id) return; // nicht dein Zug
 
-        const roomData = rooms[roomCode];
+    const def = ACTION_DEFS[actionKey];
+    if (!def) return;
+    if (def.needsTarget && !targetId) return;
 
-        socket.emit('room-joined', {
-            roomCode: roomCode,
-            maxPlayers: roomData.maxPlayers,
-            players: Object.values(roomData.players)
-        });
+    const target = targetId ? room.players.find(p => p.id === targetId) : null;
 
-        io.to(roomCode).emit('update-room-state', {
-            maxPlayers: roomData.maxPlayers,
-            players: Object.values(roomData.players)
-        });
+    if (def.isSwap) {
+      room.deck.push(...actor.classes);
+      room.deck = shuffle(room.deck);
+      actor.classes = [room.deck.pop(), room.deck.pop()];
+      io.to(actor.id).emit('yourClasses', actor.classes);
+      io.to(room.code).emit('log', `${actor.name} tauscht seine Klassen.`);
+    } else {
+      const isBluff = def.classKey ? !actor.classes.includes(def.classKey) : false;
+      const targetTxt = target ? ` gegen ${target.name}` : '';
+      const bluffTxt = def.classKey ? (isBluff ? ' — geblufft!' : ' — echte Klasse') : '';
+      io.to(room.code).emit('log', `${actor.name} führt „${def.label}"${targetTxt} aus.${bluffTxt}`);
     }
 
-    socket.on('webrtc-offer', (data) => {
-        socket.to(data.target).emit('webrtc-offer', { sdp: data.sdp, caller: socket.id });
-    });
+    room.turnIndex = (room.turnIndex + 1) % room.players.length;
+    broadcastRoom(room);
+  });
 
-    socket.on('webrtc-answer', (data) => {
-        socket.to(data.target).emit('webrtc-answer', { sdp: data.sdp, responder: socket.id });
-    });
+  // --- WebRTC-Signalisierung für Video/Audio (Mesh) ---
+  socket.on('webrtc-signal', ({ to, data }) => {
+    io.to(to).emit('webrtc-signal', { from: socket.id, data });
+  });
 
-    socket.on('webrtc-ice-candidate', (data) => {
-        socket.to(data.target).emit('webrtc-ice-candidate', { candidate: data.candidate, sender: socket.id });
-    });
-
-    socket.on('start-game', () => {
-        const roomCode = socket.roomCode;
-        if (!roomCode || !rooms[roomCode]) return;
-
-        const deck = shuffle(CARD_DECK);
-        const roomPlayers = rooms[roomCode].players;
-
-        Object.keys(roomPlayers).forEach((id) => {
-            roomPlayers[id].cards = [deck.pop(), deck.pop()];
-            io.to(id).emit('your-cards', roomPlayers[id].cards);
-        });
-    });
-
-    socket.on('disconnect', () => {
-        const roomCode = socket.roomCode;
-        if (roomCode && rooms[roomCode]) {
-            delete rooms[roomCode].players[socket.id];
-            
-            if (Object.keys(rooms[roomCode].players).length === 0) {
-                delete rooms[roomCode];
-            } else {
-                io.to(roomCode).emit('update-room-state', {
-                    maxPlayers: rooms[roomCode].maxPlayers,
-                    players: Object.values(rooms[roomCode].players)
-                });
-                io.to(roomCode).emit('user-disconnected', socket.id);
-            }
-        }
-    });
+  socket.on('disconnect', () => {
+    const code = socket.data.roomCode;
+    const room = rooms[code];
+    if (!room) return;
+    room.players = room.players.filter(p => p.id !== socket.id);
+    io.to(room.code).emit('peerLeft', socket.id);
+    if (room.players.length === 0) { delete rooms[code]; return; }
+    if (room.hostId === socket.id) room.hostId = room.players[0].id;
+    if (room.started && room.turnIndex >= room.players.length) room.turnIndex = 0;
+    broadcastRoom(room);
+  });
 });
 
-const PORT = process.env.PORT || 10000;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server läuft auf Port ${PORT}`);
-});
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log('Server läuft auf Port ' + PORT));
