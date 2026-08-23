@@ -7,13 +7,12 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// Absoluter Pfad zum public-Ordner für Render
-const publicPath = path.join(__dirname, 'public');
-app.use(express.static(publicPath));
+// Statische Dateien bereitstellen
+app.use(express.static(__dirname + '/public'));
 
-// Explizites Routing für die Startseite
-app.get('/', (req, res) => {
-    res.sendFile(path.join(publicPath, 'index.html'));
+// Direkte Auslieferung der index.html für die Hauptseite
+app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
 });
 
 io.on('connection', (socket) => {
