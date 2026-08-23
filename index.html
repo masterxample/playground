@@ -2,320 +2,210 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maskenrat - Hofintrige & Bluff</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Maskerade - Webcam Spielraum</title>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
-        :root {
-            --bg-color: #1a1829;
-            --card-bg: #2a2640;
-            --accent-gold: #e2b714;
-            --text-light: #ece8e1;
-            --danger-red: #d9534f;
-            --success-green: #5cb85c;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background-color: #121212; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* Login Screen */
+        #login-screen { position: absolute; inset: 0; background: #1a1a1a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; gap: 15px; }
+        #login-screen input { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; text-align: center; }
+        #login-screen button { padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; border: none; background: #28a745; color: white; cursor: pointer; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-light);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+        /* Main Game Layout */
+        #game-screen { display: flex; flex-direction: column; height: 100%; }
+        
+        /* Video Grid */
+        #video-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; padding: 10px; overflow-y: auto; align-content: center; }
+        .video-card { background: #222; border-radius: 10px; overflow: hidden; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 4/3; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .player-name { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 3px 8px; border-radius: 4px; font-size: 12px; }
 
-        h1 {
-            color: var(--accent-gold);
-            margin-bottom: 5px;
-            text-align: center;
-        }
-
-        .subtitle {
-            font-style: italic;
-            margin-bottom: 20px;
-            color: #a09abc;
-        }
-
-        #game-container {
-            width: 100%;
-            max-width: 600px;
-            background: rgba(0,0,0,0.2);
-            border: 2px solid var(--accent-gold);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-        }
-
-        .setup-screen, .game-screen {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .hidden { display: none !important; }
-
-        label { font-weight: bold; }
-
-        input, select, button {
-            padding: 12px;
-            border-radius: 6px;
-            border: none;
-            font-size: 16px;
-        }
-
-        button {
-            background-color: var(--accent-gold);
-            color: #111;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.1s, background-color 0.2s;
-        }
-
-        button:hover { background-color: #f7d038; }
-        button:active { transform: scale(0.98); }
-
-        .btn-danger { background-color: var(--danger-red); color: white; }
-        .btn-danger:hover { background-color: #c9302c; }
-
-        .player-status {
-            display: flex;
-            justify-content: space-between;
-            background: var(--card-bg);
-            padding: 10px 15px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-
-        .active-player {
-            border: 2px solid var(--accent-gold);
-        }
-
-        .card-container {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin: 15px 0;
-        }
-
-        .card {
-            width: 120px;
-            height: 160px;
-            background: var(--card-bg);
-            border: 2px solid var(--accent-gold);
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            user-select: none;
-        }
-
-        .card.hidden-card {
-            background: #151320;
-            border-color: #444060;
-        }
-
-        .action-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .log-box {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid #444060;
-            border-radius: 6px;
-            padding: 10px;
-            height: 120px;
-            overflow-y: auto;
-            font-size: 14px;
-            margin-top: 15px;
-        }
+        /* Secret Cards Area (Bottom) */
+        #hand-area { background: #1e1e1e; padding: 15px; border-top: 2px solid #333; text-align: center; }
+        .cards-container { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+        .card { background: #ff4757; color: white; padding: 15px 20px; border-radius: 8px; font-weight: bold; border: 2px solid #ffffff33; box-shadow: 0 4px 6px rgba(0,0,0,0.3); font-size: 14px; }
+        
+        /* Controls */
+        #controls { padding: 10px; background: #181818; display: flex; justify-content: center; gap: 10px; }
+        button.action-btn { padding: 10px 16px; border-radius: 6px; border: none; background: #007bff; color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <h1>MASKENRAT</h1>
-    <div class="subtitle">Ein Spiel um Macht, Einfluss & Täuschung</div>
+    <!-- Login ohne Account -->
+    <div id="login-screen">
+        <h2>Willkommen bei Maskerade</h2>
+        <input type="text" id="username-input" placeholder="Dein Name..." maxlength="15">
+        <button onclick="joinGame()">Spielraum betreten</button>
+    </div>
 
-    <div id="game-container">
-        <!-- SETUP SCREEN -->
-        <div id="setup-screen" class="setup-screen">
-            <h3>Spieler-Anzahl wählen (2 - 6 Spieler)</h3>
-            <select id="player-count">
-                <option value="2">2 Spieler</option>
-                <option value="3">3 Spieler</option>
-                <option value="4" selected>4 Spieler</option>
-                <option value="5">5 Spieler</option>
-                <option value="6">6 Spieler</option>
-            </select>
-            <button onclick="startGame()">Spiel Starten</button>
+    <!-- Spieloberfläche -->
+    <div id="game-screen">
+        <div id="video-grid"></div>
+
+        <div id="controls">
+            <button class="action-btn" onclick="startGame()">Karten neu geben</button>
         </div>
 
-        <!-- MAIN GAME SCREEN -->
-        <div id="game-screen" class="game-screen hidden">
-            <div id="players-overview"></div>
-
-            <hr style="border-color: #444060; margin: 10px 0;">
-
-            <div id="turn-indicator" style="text-align: center; font-size: 18px; font-weight: bold; color: var(--accent-gold);"></div>
-
-            <!-- PASS AND PLAY PRIVACY OVERLAY -->
-            <div id="privacy-box" style="text-align: center; padding: 20px; background: var(--card-bg); border-radius: 8px;">
-                <p id="privacy-text">Gib das Gerät an Spieler 1 weiter!</p>
-                <button onclick="revealHand()">Karten anzeigen</button>
+        <!-- Eigene Handkarten (Nur für mich sichtbar) -->
+        <div id="hand-area">
+            <h3>Deine geheimen Handkarten:</h3>
+            <div id="cards-container" class="cards-container">
+                <span style="color: #888;">Noch keine Karten ausgeteilt.</span>
             </div>
-
-            <!-- ACTION & HAND AREA -->
-            <div id="action-area" class="hidden">
-                <div class="card-container" id="hand-cards"></div>
-
-                <h4>Wähle deine Aktion:</h4>
-                <div class="action-grid">
-                    <button onclick="takeIncome()">Einkommen (+1 Münze)</button>
-                    <button onclick="takeForeignAid()">Fremde Hilfe (+2 Münzen)</button>
-                    <button onclick="playRole('Kanzlerin')">Kanzlerin (Steuer +3)</button>
-                    <button onclick="playRole('Straßenräuber')">Straßenräuber (Raub 2 Münzen)</button>
-                    <button onclick="playRole('Bluthund')">Bluthund (Anschlag: 3 M.)</button>
-                    <button onclick="playRole('Spion')">Spion (Karten tauschen)</button>
-                    <button onclick="doCoup()" class="btn-danger" style="grid-column: span 2;">Sturz (Zahle 7 Münzen, eliminiere Rolle)</button>
-                </div>
-            </div>
-
-            <div class="log-box" id="game-log"></div>
         </div>
     </div>
 
     <script>
-        const ROLES = ['Kanzlerin', 'Straßenräuber', 'Bluthund', 'Bodyguard', 'Spion'];
-        let players = [];
-        let deck = [];
-        let currentPlayerIndex = 0;
+        const socket = io();
+        let localStream;
+        const peers = {};
+        const videoGrid = document.getElementById('video-grid');
 
-        function log(msg) {
-            const logBox = document.getElementById('game-log');
-            logBox.innerHTML += `<div>> ${msg}</div>`;
-            logBox.scrollTop = logBox.scrollHeight;
+        // Kamera & Mikrofon beim Start anfordern
+        async function initCamera() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                addVideoStream(socket.id, 'Du', localStream, true);
+            } catch (err) {
+                alert("Kamera/Mikrofon-Zugriff verweigert oder nicht verfügbar. Bitte im Browser erlauben.");
+            }
         }
 
-        function createDeck() {
-            deck = [];
-            ROLES.forEach(role => {
-                deck.push(role, role, role); // 3 Karten jeder Rolle
+        function joinGame() {
+            const name = document.getElementById('username-input').value.trim();
+            if (!name) return alert("Bitte gib einen Namen ein!");
+            
+            document.getElementById('login-screen').style.display = 'none';
+            initCamera().then(() => {
+                socket.emit('join-game', name);
             });
-            deck.sort(() => Math.random() - 0.5);
         }
 
         function startGame() {
-            const count = parseInt(document.getElementById('player-count').value);
-            createDeck();
-            players = [];
+            socket.emit('start-game');
+        }
 
-            for (let i = 1; i <= count; i++) {
-                players.push({
-                    id: i,
-                    name: `Spieler ${i}`,
-                    coins: 2,
-                    hand: [deck.pop(), deck.pop()],
-                    alive: true
+        // --- WebRTC Video Stream Logik ---
+        function addVideoStream(peerId, name, stream, isMuted = false) {
+            if (document.getElementById(`video-${peerId}`)) return;
+
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.id = `video-${peerId}`;
+
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.autoplay = true;
+            video.playsInline = true;
+            if (isMuted) video.muted = true; // Eigenen Ton stummschalten
+
+            const label = document.createElement('div');
+            label.className = 'player-name';
+            label.innerText = name;
+
+            card.appendChild(video);
+            card.appendChild(label);
+            videoGrid.appendChild(card);
+        }
+
+        // Neue Spieler verbinden
+        socket.on('update-players', (playerList) => {
+            playerList.forEach(player => {
+                if (player.id !== socket.id && !peers[player.id]) {
+                    createPeerConnection(player.id, player.name, true);
+                }
+            });
+        });
+
+        function createPeerConnection(targetId, targetName, isInitiator) {
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            peers[targetId] = pc;
+
+            if (localStream) {
+                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            }
+
+            pc.ontrack = (event) => {
+                addVideoStream(targetId, targetName, event.streams[0]);
+            };
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('webrtc-ice-candidate', { target: targetId, candidate: event.candidate });
+                }
+            };
+
+            if (isInitiator) {
+                pc.createOffer().then(offer => {
+                    pc.setLocalDescription(offer);
+                    socket.emit('webrtc-offer', { target: targetId, sdp: offer });
                 });
             }
-
-            document.getElementById('setup-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
-            
-            log("Das Spiel hat begonnen! Jeder Spieler startet mit 2 Münzen.");
-            updateUI();
         }
 
-        function updateUI() {
-            const overview = document.getElementById('players-overview');
-            overview.innerHTML = '';
+        socket.on('webrtc-offer', async (data) => {
+            const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+            peers[data.caller] = pc;
 
-            players.forEach((p, idx) => {
-                if (!p.alive) return;
-                const div = document.createElement('div');
-                div.className = `player-status ${idx === currentPlayerIndex ? 'active-player' : ''}`;
-                div.innerHTML = `<span><strong>${p.name}</strong> (${p.hand.length} Einfluss)</span><span>💰 ${p.coins} Münzen</span>`;
-                overview.appendChild(div);
-            });
-
-            const current = players[currentPlayerIndex];
-            document.getElementById('turn-indicator').innerText = `${current.name} ist am Zug`;
-            document.getElementById('privacy-text').innerText = `Gib das Gerät an ${current.name} weiter!`;
-
-            document.getElementById('privacy-box').classList.remove('hidden');
-            document.getElementById('action-area').classList.add('hidden');
-        }
-
-        function revealHand() {
-            document.getElementById('privacy-box').classList.add('hidden');
-            document.getElementById('action-area').classList.remove('hidden');
-
-            const handContainer = document.getElementById('hand-cards');
-            handContainer.innerHTML = '';
-
-            const current = players[currentPlayerIndex];
-            current.hand.forEach(role => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `<strong>${role}</strong>`;
-                handContainer.appendChild(card);
-            });
-        }
-
-        function nextTurn() {
-            do {
-                currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
-            } while (!players[currentPlayerIndex].alive);
-
-            updateUI();
-        }
-
-        function takeIncome() {
-            const p = players[currentPlayerIndex];
-            p.coins += 1;
-            log(`${p.name} nimmt 1 Münze Einkommen. (Gesamt: ${p.coins})`);
-            nextTurn();
-        }
-
-        function takeForeignAid() {
-            const p = players[currentPlayerIndex];
-            p.coins += 2;
-            log(`${p.name} fordert 2 Münzen Fremde Hilfe.`);
-            nextTurn();
-        }
-
-        function playRole(roleName) {
-            const p = players[currentPlayerIndex];
-            log(`${p.name} nutzt/blufft die Aktion der Rolle: **${roleName}**.`);
-            
-            if (roleName === 'Kanzlerin') p.coins += 3;
-            if (roleName === 'Bluthund') {
-                if (p.coins < 3) { alert("Nicht genug Münzen!"); return; }
-                p.coins -= 3;
-                log(`${p.name} zahlt 3 Münzen für einen Anschlag.`);
+            if (localStream) {
+                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
             }
-            
-            nextTurn();
-        }
 
-        function doCoup() {
-            const p = players[currentPlayerIndex];
-            if (p.coins < 7) {
-                alert("Du brauchst mindestens 7 Münzen für einen Sturz!");
-                return;
+            pc.ontrack = (event) => {
+                addVideoStream(data.caller, 'Mitspieler', event.streams[0]);
+            };
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('webrtc-ice-candidate', { target: data.caller, candidate: event.candidate });
+                }
+            };
+
+            await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+
+            socket.emit('webrtc-answer', { target: data.caller, sdp: answer });
+        });
+
+        socket.on('webrtc-answer', async (data) => {
+            if (peers[data.responder]) {
+                await peers[data.responder].setRemoteDescription(new RTCSessionDescription(data.sdp));
             }
-            p.coins -= 7;
-            log(`${p.name} führt einen Sturz durch (-7 Münzen)!`);
-            nextTurn();
-        }
+        });
+
+        socket.on('webrtc-ice-candidate', async (data) => {
+            if (peers[data.sender]) {
+                await peers[data.sender].addIceCandidate(new RTCIceCandidate(data.candidate));
+            }
+        });
+
+        socket.on('user-disconnected', (id) => {
+            if (peers[id]) {
+                peers[id].close();
+                delete peers[id];
+            }
+            const el = document.getElementById(`video-${id}`);
+            if (el) el.remove();
+        });
+
+        // --- Geheime Karten-Empfang (Nur für MICH) ---
+        socket.on('your-cards', (cards) => {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+            cards.forEach(cardName => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card';
+                cardEl.innerText = cardName;
+                container.appendChild(cardEl);
+            });
+        });
     </script>
 </body>
 </html>
