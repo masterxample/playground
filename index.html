@@ -7,10 +7,10 @@
     <script src="/socket.io/socket.io.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background-color: #121212; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        html, body { width: 100%; height: 100%; overflow: hidden; font-family: Arial, sans-serif; background-color: #121212; color: #ffffff; }
         
-        /* Start-Screen / Raum-Auswahl */
-        #login-screen { position: absolute; inset: 0; background: #1a1a1a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; gap: 15px; padding: 20px; text-align: center; }
+        /* Start-Screen */
+        #login-screen { position: fixed; inset: 0; background: #1a1a1a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; gap: 15px; padding: 20px; text-align: center; }
         .input-group { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; }
         input, select { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; text-align: center; }
         input#roomcode-input { text-transform: uppercase; }
@@ -21,28 +21,36 @@
         .btn-blue { background: #007bff; }
         .divider { color: #666; font-size: 14px; margin: 10px 0; border-top: 1px solid #333; padding-top: 10px; }
 
-        /* Header mit Raum-Code und Status */
-        #header { background: #181818; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-        .code-box { background: #222; border: 1px solid #ffc107; padding: 6px 14px; border-radius: 6px; font-weight: bold; color: #ffc107; letter-spacing: 2px; font-size: 18px; }
-        #status-info { color: #888; font-size: 14px; }
+        /* App-Layout (Kein Scrollen) */
+        #app { display: flex; flex-direction: column; width: 100vw; height: 100vh; overflow: hidden; }
 
-        /* Main Game Layout */
-        #game-screen { display: flex; flex-direction: column; height: 100%; }
-        #video-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding: 15px; overflow-y: auto; align-content: center; }
+        /* Header */
+        #header { height: 50px; background: #181818; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; flex-shrink: 0; }
+        .code-box { background: #222; border: 1px solid #ffc107; padding: 4px 10px; border-radius: 6px; font-weight: bold; color: #ffc107; letter-spacing: 2px; font-size: 16px; }
+        #status-info { color: #aaa; font-size: 14px; }
+
+        /* Grid für 2 bis 6 Spieler */
+        #video-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; padding: 12px; min-height: 0; overflow: hidden; background: #121212; }
         
-        /* Player Card Slots */
-        .slot-card { background: #1e1e1e; border: 2px dashed #444; border-radius: 12px; overflow: hidden; position: relative; aspect-ratio: 4/3; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .slot-card.active { border: 2px solid #28a745; background: #222; }
+        /* Karten-Slots für die Spieler */
+        .slot-card { background: #1e1e1e; border: 2px dashed #333; border-radius: 10px; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; min-height: 0; position: relative; }
+        .slot-card.active { border: 2px solid #28a745; background: #1a1a1a; }
+        
+        /* Das kleine Feld für die Webcam oben */
+        .webcam-box { width: 100%; flex: 1; min-height: 0; background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 6px; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .player-name { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; }
-        .waiting-text { color: #666; font-size: 14px; font-style: italic; text-align: center; padding: 10px; }
-
-        /* Secret Cards Area */
-        #hand-area { background: #181818; padding: 15px; border-top: 2px solid #333; text-align: center; }
-        .cards-container { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
-        .card { background: #ff4757; color: white; padding: 15px 22px; border-radius: 8px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.4); }
         
-        #controls { padding: 10px; background: #121212; display: flex; justify-content: center; }
+        /* Avatar Icon + Name unter dem Videofeld */
+        .player-info { display: flex; align-items: center; gap: 8px; background: #252525; padding: 6px 12px; border-radius: 20px; border: 1px solid #333; width: 100%; justify-content: center; }
+        .user-icon { width: 26px; height: 26px; background: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; text-transform: uppercase; flex-shrink: 0; }
+        .player-name { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .waiting-text { color: #666; font-size: 13px; font-style: italic; text-align: center; margin: auto; }
+
+        /* Steuerleiste unten */
+        #bottom-panel { background: #181818; border-top: 1px solid #333; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
+        .cards-container { display: flex; justify-content: center; gap: 10px; }
+        .card { background: #ff4757; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.4); }
     </style>
 </head>
 <body>
@@ -71,26 +79,22 @@
         </div>
     </div>
 
-    <!-- Spieloberfläche -->
-    <div id="game-screen">
+    <!-- Hauptansicht ohne Scrollen -->
+    <div id="app">
         <div id="header">
             <div>
-                <span style="font-weight: bold;">RAUM-CODE:</span>
+                <span style="font-weight: bold; font-size: 14px;">RAUM:</span>
                 <span id="room-display" class="code-box">----</span>
             </div>
-            <div id="status-info">Warte auf Mitspieler...</div>
+            <div id="status-info">Warte auf Verbindung...</div>
         </div>
 
         <div id="video-grid"></div>
 
-        <div id="controls">
+        <div id="bottom-panel">
             <button id="start-btn" class="btn btn-green" onclick="startGame()">Karten neu geben</button>
-        </div>
-
-        <div id="hand-area">
-            <h3>Deine geheimen Handkarten:</h3>
             <div id="cards-container" class="cards-container">
-                <span style="color: #666;">Noch keine Karten ausgegeben.</span>
+                <span style="color: #666; font-size: 13px;">Noch keine Karten ausgegeben.</span>
             </div>
         </div>
     </div>
@@ -100,15 +104,19 @@
         let localStream = null;
         const peers = {};
         const videoGrid = document.getElementById('video-grid');
+        let currentRoomState = null;
 
-        // Kamera initialisieren
+        // Kamera und Mikrofon starten
         async function initCamera() {
             if (localStream) return true;
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
+                    audio: true 
+                });
                 return true;
             } catch (err) {
-                console.warn("Kamera/Mikrofon nicht verknüpft oder abgelehnt:", err);
+                console.warn("Kamera/Mikrofon Zugriff abgelehnt oder nicht vorhanden:", err);
                 return false;
             }
         }
@@ -140,15 +148,17 @@
             alert(msg);
         });
 
-        // Warteraum & Plätze aktualisieren
+        // Warteraum & Plätze zeichnen
         socket.on('update-room-state', (data) => {
-            const { maxPlayers, players } = data;
+            currentRoomState = data;
+            renderGrid();
+        });
 
-            // Status-Text in Kopfzeile
-            const statusEl = document.getElementById('status-info');
-            statusEl.innerText = `Spieler: ${players.length} / ${maxPlayers}`;
+        function renderGrid() {
+            if (!currentRoomState) return;
+            const { maxPlayers, players } = currentRoomState;
 
-            // Video-Grid leeren und genau 'maxPlayers' Plätze (Slots) anlegen
+            document.getElementById('status-info').innerText = `Spieler: ${players.length} / ${maxPlayers}`;
             videoGrid.innerHTML = '';
 
             for (let i = 0; i < maxPlayers; i++) {
@@ -159,32 +169,47 @@
                     slot.className = 'slot-card active';
                     slot.id = `slot-${player.id}`;
 
-                    const label = document.createElement('div');
-                    label.className = 'player-name';
-                    label.innerText = player.id === socket.id ? `${player.name} (Du)` : player.name;
+                    // 1. Webcam-Feld oben
+                    const webcamBox = document.createElement('div');
+                    webcamBox.className = 'webcam-box';
+                    webcamBox.id = `webcam-${player.id}`;
 
-                    // Wenn es der eigene Stream ist:
+                    // 2. Namens- & Icon-Leiste unten
+                    const infoBar = document.createElement('div');
+                    infoBar.className = 'player-info';
+                    
+                    const initial = player.name.charAt(0).toUpperCase();
+                    const displayName = player.id === socket.id ? `${player.name} (Du)` : player.name;
+
+                    infoBar.innerHTML = `
+                        <div class="user-icon">${initial}</div>
+                        <div class="player-name">${displayName}</div>
+                    `;
+
+                    slot.appendChild(webcamBox);
+                    slot.appendChild(infoBar);
+
+                    // Eigene Kamera einbinden
                     if (player.id === socket.id) {
                         if (localStream) {
                             const video = document.createElement('video');
                             video.srcObject = localStream;
                             video.autoplay = true;
                             video.playsInline = true;
-                            video.muted = true;
-                            slot.appendChild(video);
+                            video.muted = true; // Eigenen Ton stummschalten
+                            webcamBox.appendChild(video);
                         } else {
-                            slot.innerHTML = `<span style="color:#aaa;">Kamera aus</span>`;
+                            webcamBox.innerHTML = `<span class="waiting-text">Kamera aus</span>`;
                         }
                     } else {
-                        // Platzhalter für Mitspieler, bis WebRTC steht
-                        slot.innerHTML = `<span style="color:#aaa;">Verbinde Video...</span>`;
+                        // Status-Text für Mitspieler
+                        webcamBox.innerHTML = `<span class="waiting-text" id="peer-status-${player.id}">Verbinde Kamera...</span>`;
                         
-                        // Peer Connection herstellen
+                        // WebRTC-Verbindung starten
                         if (!peers[player.id]) {
                             createPeerConnection(player.id, player.name, true);
                         }
                     }
-                    slot.appendChild(label);
                 } else {
                     // Leerer Platz im Warteraum
                     slot.className = 'slot-card';
@@ -193,9 +218,9 @@
 
                 videoGrid.appendChild(slot);
             }
-        });
+        }
 
-        // --- WebRTC Video & Audio ---
+        // WebRTC Signaling für Sprache & Video
         function createPeerConnection(targetId, targetName, isInitiator) {
             const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
             peers[targetId] = pc;
@@ -204,7 +229,7 @@
                 localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
             }
 
-            pc.ontrack = (event) => attachRemoteStream(targetId, targetName, event.streams[0]);
+            pc.ontrack = (event) => attachRemoteStream(targetId, event.streams[0]);
             pc.onicecandidate = (event) => {
                 if (event.candidate) socket.emit('webrtc-ice-candidate', { target: targetId, candidate: event.candidate });
             };
@@ -225,7 +250,7 @@
                 localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
             }
 
-            pc.ontrack = (event) => attachRemoteStream(data.caller, 'Mitspieler', event.streams[0]);
+            pc.ontrack = (event) => attachRemoteStream(data.caller, event.streams[0]);
             pc.onicecandidate = (event) => {
                 if (event.candidate) socket.emit('webrtc-ice-candidate', { target: data.caller, candidate: event.candidate });
             };
@@ -249,21 +274,15 @@
             }
         });
 
-        function attachRemoteStream(peerId, name, stream) {
-            const slot = document.getElementById(`slot-${peerId}`);
-            if (slot) {
-                slot.innerHTML = '';
+        function attachRemoteStream(peerId, stream) {
+            const webcamBox = document.getElementById(`webcam-${peerId}`);
+            if (webcamBox) {
+                webcamBox.innerHTML = ''; // Vorherigen Platzhalter löschen
                 const video = document.createElement('video');
                 video.srcObject = stream;
                 video.autoplay = true;
                 video.playsInline = true;
-
-                const label = document.createElement('div');
-                label.className = 'player-name';
-                label.innerText = name;
-
-                slot.appendChild(video);
-                slot.appendChild(label);
+                webcamBox.appendChild(video);
             }
         }
 
@@ -278,7 +297,6 @@
             socket.emit('start-game');
         }
 
-        // Geheime Handkarten empfangen
         socket.on('your-cards', (cards) => {
             const container = document.getElementById('cards-container');
             container.innerHTML = '';
