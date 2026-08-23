@@ -39,11 +39,14 @@ function shuffle(array) {
 
 io.on('connection', (socket) => {
 
-    // 1. Raum erstellen
-    socket.on('create-room', (username) => {
+    // 1. Raum erstellen mit definierter Max-Spieleranzahl
+    socket.on('create-room', ({ username, maxPlayers }) => {
         const roomCode = generateRoomCode();
+        const max = parseInt(maxPlayers) || 4;
+
         rooms[roomCode] = {
             code: roomCode,
+            maxPlayers: max,
             players: {}
         };
 
@@ -52,10 +55,16 @@ io.on('connection', (socket) => {
 
     // 2. Raum beitreten
     socket.on('join-room', ({ roomCode, username }) => {
-        const code = roomCode.toUpperCase().trim();
+        const code = (roomCode || '').toUpperCase().trim();
         if (!rooms[code]) {
             return socket.emit('error-msg', 'Raum-Code nicht gefunden!');
         }
+
+        const currentCount = Object.keys(rooms[code].players).length;
+        if (currentCount >= rooms[code].maxPlayers) {
+            return socket.emit('error-msg', 'Dieser Raum ist bereits voll!');
+        }
+
         joinRoom(socket, code, username);
     });
 
@@ -69,17 +78,23 @@ io.on('connection', (socket) => {
             cards: []
         };
 
-        // Bestätigung & Raum-Info an den neuen Spieler
+        const roomData = rooms[roomCode];
+
+        // Bestätigung & Raum-Info an den Beitretenden
         socket.emit('room-joined', {
             roomCode: roomCode,
-            players: Object.values(rooms[roomCode].players)
+            maxPlayers: roomData.maxPlayers,
+            players: Object.values(roomData.players)
         });
 
-        // Allen anderen im selben Raum Bescheid geben
-        io.to(roomCode).emit('update-players', Object.values(rooms[roomCode].players));
+        // Alle im selben Raum aktualisieren
+        io.to(roomCode).emit('update-room-state', {
+            maxPlayers: roomData.maxPlayers,
+            players: Object.values(roomData.players)
+        });
     }
 
-    // 3. WebRTC Video-Signaling (nur innerhalb desselben Raums)
+    // 3. WebRTC Video-/Audio-Signaling
     socket.on('webrtc-offer', (data) => {
         socket.to(data.target).emit('webrtc-offer', { sdp: data.sdp, caller: socket.id });
     });
@@ -92,7 +107,7 @@ io.on('connection', (socket) => {
         socket.to(data.target).emit('webrtc-ice-candidate', { candidate: data.candidate, sender: socket.id });
     });
 
-    // 4. Karten verteilen (NUR im eigenen Raum)
+    // 4. Karten verteilen
     socket.on('start-game', () => {
         const roomCode = socket.roomCode;
         if (!roomCode || !rooms[roomCode]) return;
@@ -112,11 +127,13 @@ io.on('connection', (socket) => {
         if (roomCode && rooms[roomCode]) {
             delete rooms[roomCode].players[socket.id];
             
-            // Wenn Raum leer ist, Raum löschen
             if (Object.keys(rooms[roomCode].players).length === 0) {
                 delete rooms[roomCode];
             } else {
-                io.to(roomCode).emit('update-players', Object.values(rooms[roomCode].players));
+                io.to(roomCode).emit('update-room-state', {
+                    maxPlayers: rooms[roomCode].maxPlayers,
+                    players: Object.values(rooms[roomCode].players)
+                });
                 io.to(roomCode).emit('user-disconnected', socket.id);
             }
         }
