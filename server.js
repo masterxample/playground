@@ -13,7 +13,6 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Speicher für alle aktiven Räume
 const rooms = {};
 
 const CARD_DECK = [
@@ -39,7 +38,6 @@ function shuffle(array) {
 
 io.on('connection', (socket) => {
 
-    // 1. Raum erstellen mit definierter Max-Spieleranzahl
     socket.on('create-room', ({ username, maxPlayers }) => {
         const roomCode = generateRoomCode();
         const max = parseInt(maxPlayers) || 4;
@@ -53,7 +51,6 @@ io.on('connection', (socket) => {
         joinRoom(socket, roomCode, username);
     });
 
-    // 2. Raum beitreten
     socket.on('join-room', ({ roomCode, username }) => {
         const code = (roomCode || '').toUpperCase().trim();
         if (!rooms[code]) {
@@ -80,21 +77,18 @@ io.on('connection', (socket) => {
 
         const roomData = rooms[roomCode];
 
-        // Bestätigung & Raum-Info an den Beitretenden
         socket.emit('room-joined', {
             roomCode: roomCode,
             maxPlayers: roomData.maxPlayers,
             players: Object.values(roomData.players)
         });
 
-        // Alle im selben Raum aktualisieren
         io.to(roomCode).emit('update-room-state', {
             maxPlayers: roomData.maxPlayers,
             players: Object.values(roomData.players)
         });
     }
 
-    // 3. WebRTC Video-/Audio-Signaling
     socket.on('webrtc-offer', (data) => {
         socket.to(data.target).emit('webrtc-offer', { sdp: data.sdp, caller: socket.id });
     });
@@ -107,7 +101,6 @@ io.on('connection', (socket) => {
         socket.to(data.target).emit('webrtc-ice-candidate', { candidate: data.candidate, sender: socket.id });
     });
 
-    // 4. Karten verteilen
     socket.on('start-game', () => {
         const roomCode = socket.roomCode;
         if (!roomCode || !rooms[roomCode]) return;
@@ -121,7 +114,6 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Trennung verarbeiten
     socket.on('disconnect', () => {
         const roomCode = socket.roomCode;
         if (roomCode && rooms[roomCode]) {
