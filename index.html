@@ -1,312 +1,440 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Maskerade - Raum-System</title>
-    <script src="/socket.io/socket.io.js"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { width: 100%; height: 100%; overflow: hidden; font-family: Arial, sans-serif; background-color: #121212; color: #ffffff; }
-        
-        /* Start-Screen */
-        #login-screen { position: fixed; inset: 0; background: #1a1a1a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; gap: 15px; padding: 20px; text-align: center; }
-        .input-group { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; }
-        input, select { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; text-align: center; }
-        input#roomcode-input { text-transform: uppercase; }
-        label { text-align: left; font-size: 14px; color: #aaa; margin-bottom: -5px; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Klassenspiel</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --accent-color: #3b82f6;
+      --success-color: #22c55e;
+      --danger-color: #ef4444;
+      --border-color: #334155;
+    }
 
-        .btn { padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; color: white; }
-        .btn-green { background: #28a745; }
-        .btn-blue { background: #007bff; }
-        .divider { color: #666; font-size: 14px; margin: 10px 0; border-top: 1px solid #333; padding-top: 10px; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
 
-        /* App-Layout (Kein Scrollen) */
-        #app { display: flex; flex-direction: column; width: 100vw; height: 100vh; overflow: hidden; }
+    .container {
+      max-width: 900px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-        /* Header */
-        #header { height: 50px; background: #181818; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; flex-shrink: 0; }
-        .code-box { background: #222; border: 1px solid #ffc107; padding: 4px 10px; border-radius: 6px; font-weight: bold; color: #ffc107; letter-spacing: 2px; font-size: 16px; }
-        #status-info { color: #aaa; font-size: 14px; }
+    h1, h2 {
+      margin: 0 0 10px 0;
+    }
 
-        /* Grid für 2 bis 6 Spieler */
-        #video-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; padding: 12px; min-height: 0; overflow: hidden; background: #121212; }
-        
-        /* Karten-Slots für die Spieler */
-        .slot-card { background: #1e1e1e; border: 2px dashed #333; border-radius: 10px; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; min-height: 0; position: relative; }
-        .slot-card.active { border: 2px solid #28a745; background: #1a1a1a; }
-        
-        /* Das kleine Feld für die Webcam oben */
-        .webcam-box { width: 100%; flex: 1; min-height: 0; background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 6px; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* Avatar Icon + Name unter dem Videofeld */
-        .player-info { display: flex; align-items: center; gap: 8px; background: #252525; padding: 6px 12px; border-radius: 20px; border: 1px solid #333; width: 100%; justify-content: center; }
-        .user-icon { width: 26px; height: 26px; background: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; text-transform: uppercase; flex-shrink: 0; }
-        .player-name { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
 
-        .waiting-text { color: #666; font-size: 13px; font-style: italic; text-align: center; margin: auto; }
+    .btn {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s, opacity 0.2s;
+    }
 
-        /* Steuerleiste unten */
-        #bottom-panel { background: #181818; border-top: 1px solid #333; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
-        .cards-container { display: flex; justify-content: center; gap: 10px; }
-        .card { background: #ff4757; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.4); }
-    </style>
+    .btn:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+
+    .btn:disabled {
+      background-color: #475569;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .player-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .player-card {
+      background-color: #0f172a;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      position: relative;
+    }
+
+    .player-card.active-turn {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+
+    .position-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background-color: var(--border-color);
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .action-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .action-btn {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      color: white;
+      font-weight: bold;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    /* Grün = Eigene Klasse */
+    .action-btn.real-role {
+      background-color: rgba(34, 197, 94, 0.15);
+      border-color: var(--success-color);
+      color: #4ade80;
+    }
+
+    /* Rot = Bluff */
+    .action-btn.bluff-role {
+      background-color: rgba(239, 68, 68, 0.15);
+      border-color: var(--danger-color);
+      color: #f87171;
+    }
+
+    .action-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: var(--border-color);
+      color: #94a3b8;
+      background-color: transparent;
+    }
+
+    .badge {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .badge-real {
+      background-color: var(--success-color);
+      color: black;
+    }
+
+    .badge-bluff {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #0f172a;
+      padding: 10px 15px;
+      border-radius: 6px;
+    }
+
+    #log-box {
+      height: 120px;
+      overflow-y: auto;
+      background-color: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    .log-entry {
+      margin-bottom: 4px;
+    }
+  </style>
 </head>
 <body>
 
-    <!-- Start-Screen -->
-    <div id="login-screen">
-        <h2>Maskerade Lobby</h2>
-        <div class="input-group">
-            <input type="text" id="username-input" placeholder="Dein Name..." maxlength="15">
-            
-            <label for="max-players-select">Spieleranzahl für neuen Raum:</label>
-            <select id="max-players-select">
-                <option value="2">2 Spieler</option>
-                <option value="3">3 Spieler</option>
-                <option value="4" selected>4 Spieler</option>
-                <option value="5">5 Spieler</option>
-                <option value="6">6 Spieler</option>
-            </select>
-            
-            <button class="btn btn-green" onclick="createRoom()">Neuen Raum erstellen</button>
-            
-            <div class="divider">ODER EINEM RAUM BEITRETEN</div>
-            
-            <input type="text" id="roomcode-input" placeholder="4-stelliger Raum-Code" maxlength="4">
-            <button class="btn btn-blue" onclick="joinRoom()">Raum beitreten</button>
-        </div>
+<div class="container">
+  <h1>Klassenspiel</h1>
+
+  <!-- Raumeröffnung & Lobbysteuerung -->
+  <div class="card">
+    <h2>Lobby & Spielstart</h2>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+      <button id="start-game-btn" class="btn">🚀 Spiel starten (Raumeröffner)</button>
     </div>
-
-    <!-- Hauptansicht ohne Scrollen -->
-    <div id="app">
-        <div id="header">
-            <div>
-                <span style="font-weight: bold; font-size: 14px;">RAUM:</span>
-                <span id="room-display" class="code-box">----</span>
-            </div>
-            <div id="status-info">Warte auf Verbindung...</div>
-        </div>
-
-        <div id="video-grid"></div>
-
-        <div id="bottom-panel">
-            <button id="start-btn" class="btn btn-green" onclick="startGame()">Karten neu geben</button>
-            <div id="cards-container" class="cards-container">
-                <span style="color: #666; font-size: 13px;">Noch keine Karten ausgegeben.</span>
-            </div>
-        </div>
+    <div class="status-bar">
+      <div>Status: <span id="game-status" style="font-weight: bold; color: var(--accent-color);">Warten auf Start</span></div>
+      <div>Aktueller Zug: <span id="current-player-turn">-</span></div>
     </div>
+  </div>
 
-    <script>
-        const socket = io();
-        let localStream = null;
-        const peers = {};
-        const videoGrid = document.getElementById('video-grid');
-        let currentRoomState = null;
+  <!-- Eigene Spielerübersicht -->
+  <div class="card">
+    <h2>Dein Profil</h2>
+    <div style="display: flex; gap: 20px; align-items: center;">
+      <div>Spieler: <strong id="my-name">Spieler 1 (Du)</strong></div>
+      <div>Position: <strong id="my-position">-</strong></div>
+      <div>Klasse: <span id="my-class-display">Noch keine</span></div>
+    </div>
+  </div>
 
-        // Kamera und Mikrofon starten
-        async function initCamera() {
-            if (localStream) return true;
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
-                    audio: true 
-                });
-                return true;
-            } catch (err) {
-                console.warn("Kamera/Mikrofon Zugriff abgelehnt oder nicht vorhanden:", err);
-                return false;
-            }
-        }
+  <!-- Aktionen (Nur wählbar, wenn man am Zug ist) -->
+  <div class="card">
+    <h2>Aktionen</h2>
+    <p style="font-size: 14px; color: #94a3b8;">
+      Grün = Entspricht deiner echten Klasse | Rot = <strong style="color: var(--danger-color);">Bluff</strong>
+    </p>
 
-        async function createRoom() {
-            const name = document.getElementById('username-input').value.trim();
-            const maxPlayers = document.getElementById('max-players-select').value;
-            if (!name) return alert("Bitte gib einen Namen ein!");
-            
-            await initCamera();
-            socket.emit('create-room', { username: name, maxPlayers: maxPlayers });
-        }
+    <div class="action-list" id="action-container">
+      <!-- Dynamische Erzeugung der Aktions-Buttons -->
+    </div>
+  </div>
 
-        async function joinRoom() {
-            const name = document.getElementById('username-input').value.trim();
-            const code = document.getElementById('roomcode-input').value.trim();
-            if (!name || !code) return alert("Bitte Name und Raum-Code eingeben!");
-            
-            await initCamera();
-            socket.emit('join-room', { roomCode: code, username: name });
-        }
+  <!-- Spielfeld / Mitspieler -->
+  <div class="card">
+    <h2>Sitzordnung / Reihenfolge</h2>
+    <div class="player-grid" id="player-grid">
+      <!-- Dynamisch befüllt -->
+    </div>
+  </div>
 
-        socket.on('room-joined', (data) => {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('room-display').innerText = data.roomCode;
-        });
+  <!-- Ereignis-Log -->
+  <div class="card">
+    <h2>Spielprotokoll</h2>
+    <div id="log-box"></div>
+  </div>
+</div>
 
-        socket.on('error-msg', (msg) => {
-            alert(msg);
-        });
+<script>
+  // Definition der bestehenden/ursprünglichen Klassen inkl. Symbolen und Aktionen
+  const CLASSES = {
+    CLASS_A: { name: 'Klasse A', icon: '🛡️', actionText: 'Standard-Aktion A ausführen' },
+    CLASS_B: { name: 'Klasse B', icon: '⚔️', actionText: 'Standard-Aktion B ausführen' },
+    SWAPPER: { name: 'Karten-Tauscher', icon: '🔄', actionText: 'Karten / Klasse austauschen' }
+  };
 
-        // Warteraum & Plätze zeichnen
-        socket.on('update-room-state', (data) => {
-            currentRoomState = data;
-            renderGrid();
-        });
+  // Spieler-Lobby
+  let players = [
+    { id: 1, name: 'Spieler 1 (Du)', isHost: true, classKey: null, position: null },
+    { id: 2, name: 'Spieler 2', isHost: false, classKey: null, position: null },
+    { id: 3, name: 'Spieler 3', isHost: false, classKey: null, position: null },
+    { id: 4, name: 'Spieler 4', isHost: false, classKey: null, position: null }
+  ];
 
-        function renderGrid() {
-            if (!currentRoomState) return;
-            const { maxPlayers, players } = currentRoomState;
+  const myId = 1;
+  let gameStarted = false;
+  let currentTurnIndex = 0;
 
-            document.getElementById('status-info').innerText = `Spieler: ${players.length} / ${maxPlayers}`;
-            videoGrid.innerHTML = '';
+  // DOM Elemente
+  const startGameBtn = document.getElementById('start-game-btn');
+  const gameStatusEl = document.getElementById('game-status');
+  const currentPlayerTurnEl = document.getElementById('current-player-turn');
+  const myPositionEl = document.getElementById('my-position');
+  const myClassDisplayEl = document.getElementById('my-class-display');
+  const actionContainer = document.getElementById('action-container');
+  const playerGrid = document.getElementById('player-grid');
+  const logBox = document.getElementById('log-box');
 
-            for (let i = 0; i < maxPlayers; i++) {
-                const player = players[i];
-                const slot = document.createElement('div');
+  window.addEventListener('DOMContentLoaded', () => {
+    updateUI();
+  });
 
-                if (player) {
-                    slot.className = 'slot-card active';
-                    slot.id = `slot-${player.id}`;
+  // Nur der Raumeröffner kann das Spiel starten
+  startGameBtn.addEventListener('click', () => {
+    startNewGame();
+  });
 
-                    // 1. Webcam-Feld oben
-                    const webcamBox = document.createElement('div');
-                    webcamBox.className = 'webcam-box';
-                    webcamBox.id = `webcam-${player.id}`;
+  function startNewGame() {
+    gameStarted = true;
+    log('Das Spiel wurde vom Raumeröffner gestartet!');
 
-                    // 2. Namens- & Icon-Leiste unten
-                    const infoBar = document.createElement('div');
-                    infoBar.className = 'player-info';
-                    
-                    const initial = player.name.charAt(0).toUpperCase();
-                    const displayName = player.id === socket.id ? `${player.name} (Du)` : player.name;
+    // 1. Rollen/Klassen zufällig vergeben
+    const classKeys = Object.keys(CLASSES);
+    let pool = [...classKeys];
 
-                    infoBar.innerHTML = `
-                        <div class="user-icon">${initial}</div>
-                        <div class="player-name">${displayName}</div>
-                    `;
+    players.forEach(player => {
+      if (pool.length === 0) pool = [...classKeys];
+      const randomIndex = Math.floor(Math.random() * pool.length);
+      player.classKey = pool.splice(randomIndex, 1)[0];
+    });
 
-                    slot.appendChild(webcamBox);
-                    slot.appendChild(infoBar);
+    // 2. Zufällige Positionen auslosen & Spieler danach sortieren
+    const positions = Array.from({ length: players.length }, (_, i) => i + 1);
+    shuffleArray(positions);
 
-                    // Eigene Kamera einbinden
-                    if (player.id === socket.id) {
-                        if (localStream) {
-                            const video = document.createElement('video');
-                            video.srcObject = localStream;
-                            video.autoplay = true;
-                            video.playsInline = true;
-                            video.muted = true; // Eigenen Ton stummschalten
-                            webcamBox.appendChild(video);
-                        } else {
-                            webcamBox.innerHTML = `<span class="waiting-text">Kamera aus</span>`;
-                        }
-                    } else {
-                        // Status-Text für Mitspieler
-                        webcamBox.innerHTML = `<span class="waiting-text" id="peer-status-${player.id}">Verbinde Kamera...</span>`;
-                        
-                        // WebRTC-Verbindung starten
-                        if (!peers[player.id]) {
-                            createPeerConnection(player.id, player.name, true);
-                        }
-                    }
-                } else {
-                    // Leerer Platz im Warteraum
-                    slot.className = 'slot-card';
-                    slot.innerHTML = `<div class="waiting-text">Warte auf Spieler ${i + 1}...</div>`;
-                }
+    players.forEach((player, index) => {
+      player.position = positions[index];
+    });
 
-                videoGrid.appendChild(slot);
-            }
-        }
+    // Sortierung nach Position
+    players.sort((a, b) => a.position - b.position);
 
-        // WebRTC Signaling für Sprache & Video
-        function createPeerConnection(targetId, targetName, isInitiator) {
-            const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-            peers[targetId] = pc;
+    currentTurnIndex = 0;
+    gameStatusEl.textContent = 'Läuft';
 
-            if (localStream) {
-                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-            }
+    log('Klassen wurden verteilt & zufällige Sitzpositionen zugewiesen.');
+    updateUI();
+  }
 
-            pc.ontrack = (event) => attachRemoteStream(targetId, event.streams[0]);
-            pc.onicecandidate = (event) => {
-                if (event.candidate) socket.emit('webrtc-ice-candidate', { target: targetId, candidate: event.candidate });
-            };
+  function getCurrentPlayer() {
+    return players[currentTurnIndex];
+  }
 
-            if (isInitiator) {
-                pc.createOffer().then(offer => {
-                    pc.setLocalDescription(offer);
-                    socket.emit('webrtc-offer', { target: targetId, sdp: offer });
-                });
-            }
-        }
+  function isMyTurn() {
+    return gameStarted && getCurrentPlayer().id === myId;
+  }
 
-        socket.on('webrtc-offer', async (data) => {
-            const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-            peers[data.caller] = pc;
+  // Aktion ausführen
+  function executeAction(requiredClassKey) {
+    if (!isMyTurn()) return;
 
-            if (localStream) {
-                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-            }
+    const me = players.find(p => p.id === myId);
+    const requiredClass = CLASSES[requiredClassKey];
+    const isBluff = me.classKey !== requiredClassKey;
 
-            pc.ontrack = (event) => attachRemoteStream(data.caller, event.streams[0]);
-            pc.onicecandidate = (event) => {
-                if (event.candidate) socket.emit('webrtc-ice-candidate', { target: data.caller, candidate: event.candidate });
-            };
+    if (isBluff) {
+      log(`⚠️ <strong>${me.name}</strong> führt als <span style="color: var(--danger-color)">BLUFF</span> die Aktion für <em>${requiredClass.icon} ${requiredClass.name}</em> aus!`);
+    } else {
+      log(`✅ <strong>${me.name}</strong> nutzt seine Klasse <em>${requiredClass.icon} ${requiredClass.name}</em>: <em>${requiredClass.actionText}</em>.`);
+    }
 
-            await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
+    // Spezial-Aktion: Karten tauschen (Nur wenn man am Zug ist)
+    if (requiredClassKey === 'SWAPPER') {
+      const classKeys = Object.keys(CLASSES);
+      const newClassKey = classKeys[Math.floor(Math.random() * classKeys.length)];
+      me.classKey = newClassKey;
+      log(`🔄 <strong>${me.name}</strong> hat seine Karten/Klasse ausgetauscht!`);
+    }
 
-            socket.emit('webrtc-answer', { target: data.caller, sdp: answer });
-        });
+    nextTurn();
+  }
 
-        socket.on('webrtc-answer', async (data) => {
-            if (peers[data.responder]) {
-                await peers[data.responder].setRemoteDescription(new RTCSessionDescription(data.sdp));
-            }
-        });
+  function nextTurn() {
+    currentTurnIndex = (currentTurnIndex + 1) % players.length;
+    log(`Am Zug: ${getCurrentPlayer().name} (Pos. ${getCurrentPlayer().position})`);
+    updateUI();
+  }
 
-        socket.on('webrtc-ice-candidate', async (data) => {
-            if (peers[data.sender]) {
-                await peers[data.sender].addIceCandidate(new RTCIceCandidate(data.candidate));
-            }
-        });
+  function updateUI() {
+    const me = players.find(p => p.id === myId);
 
-        function attachRemoteStream(peerId, stream) {
-            const webcamBox = document.getElementById(`webcam-${peerId}`);
-            if (webcamBox) {
-                webcamBox.innerHTML = ''; // Vorherigen Platzhalter löschen
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                video.autoplay = true;
-                video.playsInline = true;
-                webcamBox.appendChild(video);
-            }
-        }
+    // Profilanzeige
+    if (me && me.classKey) {
+      const cls = CLASSES[me.classKey];
+      myClassDisplayEl.innerHTML = `${cls.icon} <strong>${cls.name}</strong>`;
+      myPositionEl.textContent = me.position ? `Nr. ${me.position}` : '-';
+    } else {
+      myClassDisplayEl.textContent = 'Noch keine';
+      myPositionEl.textContent = '-';
+    }
 
-        socket.on('user-disconnected', (id) => {
-            if (peers[id]) {
-                peers[id].close();
-                delete peers[id];
-            }
-        });
+    // Zuganzeige
+    if (gameStarted) {
+      const activePlayer = getCurrentPlayer();
+      currentPlayerTurnEl.textContent = `Pos. ${activePlayer.position}: ${activePlayer.name}`;
+      startGameBtn.disabled = true;
+    } else {
+      currentPlayerTurnEl.textContent = '-';
+      startGameBtn.disabled = false;
+    }
 
-        function startGame() {
-            socket.emit('start-game');
-        }
+    // Aktionenliste anzeigen
+    renderActions(me);
 
-        socket.on('your-cards', (cards) => {
-            const container = document.getElementById('cards-container');
-            container.innerHTML = '';
-            cards.forEach(cardName => {
-                const cardEl = document.createElement('div');
-                cardEl.className = 'card';
-                cardEl.innerText = cardName;
-                container.appendChild(cardEl);
-            });
-        });
-    </script>
+    // Spielfeld/Spieler anzeigen
+    renderPlayerGrid();
+  }
+
+  function renderActions(me) {
+    actionContainer.innerHTML = '';
+
+    Object.keys(CLASSES).forEach(classKey => {
+      const cls = CLASSES[classKey];
+      const isMyClass = me && me.classKey === classKey;
+
+      const btn = document.createElement('button');
+      btn.className = `action-btn ${isMyClass ? 'real-role' : 'bluff-role'}`;
+      btn.disabled = !isMyTurn();
+
+      btn.innerHTML = `
+        <div>
+          <span>${cls.icon} ${cls.actionText}</span>
+          <div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">Benötigt: ${cls.name}</div>
+        </div>
+        <span class="badge ${isMyClass ? 'badge-real' : 'badge-bluff'}">
+          ${isMyClass ? 'Echte Klasse' : 'Bluff'}
+        </span>
+      `;
+
+      btn.addEventListener('click', () => executeAction(classKey));
+      actionContainer.appendChild(btn);
+    });
+  }
+
+  function renderPlayerGrid() {
+    playerGrid.innerHTML = '';
+
+    players.forEach(p => {
+      const card = document.createElement('div');
+      card.className = `player-card ${gameStarted && getCurrentPlayer().id === p.id ? 'active-turn' : ''}`;
+
+      const isSelf = p.id === myId;
+      const cls = p.classKey ? CLASSES[p.classKey] : null;
+      const displayClass = isSelf && cls ? `${cls.icon} ${cls.name}` : '❓ Verdeckt';
+
+      card.innerHTML = `
+        <span class="position-badge">${p.position ? 'Pos. ' + p.position : 'Lobby'}</span>
+        <div style="font-weight: bold; margin-bottom: 5px;">${p.name}</div>
+        <div style="font-size: 13px; color: #94a3b8;">Klasse: ${displayClass}</div>
+      `;
+
+      playerGrid.appendChild(card);
+    });
+  }
+
+  function log(message) {
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `> ${message}`;
+    logBox.appendChild(entry);
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+</script>
 </body>
 </html>
