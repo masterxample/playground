@@ -1,161 +1,203 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Klassenspiel - Lobby & Spiel</title>
-  <style>
-    :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --text-color: #f8fafc;
-      --accent-color: #3b82f6;
-      --success-color: #22c55e;
-      --danger-color: #ef4444;
-      --warn-color: #f59e0b;
-      --border-color: #334155;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg-color); color: var(--text-color);
-      margin: 0; padding: 20px; display: flex; justify-content: center;
-    }
-    .container { max-width: 1180px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
-    h1, h2, h3 { margin: 0 0 10px 0; }
-    .card {
-      background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;
-      padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-    }
-    .hidden { display: none !important; }
-    .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-    label { font-size: 14px; color: #94a3b8; }
-    input, select {
-      background-color: #0f172a; border: 1px solid var(--border-color); color: white;
-      padding: 10px; border-radius: 6px; font-size: 15px;
-    }
-    .btn {
-      background-color: var(--accent-color); color: white; border: none; padding: 10px 18px;
-      border-radius: 6px; font-weight: bold; cursor: pointer; transition: opacity 0.2s;
-    }
-    .btn:hover:not(:disabled) { opacity: 0.9; }
-    .btn:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.6; }
-    .btn-success { background-color: var(--success-color); }
-    .btn-danger { background-color: var(--danger-color); }
-    .btn-warn { background-color: var(--warn-color); color:#1a1a1a; }
-    .btn-sm { padding:7px 12px; font-size:13px; }
-    .error-msg { color: var(--danger-color); font-size: 13px; margin-top: 8px; min-height: 16px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klassenspiel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0C0E14;
+    --surface:#151822;
+    --surface-2:#1C202D;
+    --hairline: rgba(237,238,242,0.09);
+    --hairline-strong: rgba(237,238,242,0.16);
+    --text:#EDEEF2;
+    --muted:#8992A6;
+    --gold:#C9A227;
+    --gold-deep:#7A5C12;
+    --danger:#D6534C;
+    --success:#3FA97E;
+    --warn:#D9A441;
+    --radius-card:16px;
+    --radius-btn:10px;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:24px; display:flex; justify-content:center;
+    background: radial-gradient(circle at 50% -10%, #181C29, var(--ink) 55%);
+    color:var(--text); font-family:'Manrope',sans-serif; line-height:1.5;
+  }
+  h1,h2,h3{ font-family:'Cinzel', serif; letter-spacing:0.015em; margin:0 0 10px; font-weight:600; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  .container{ max-width:1180px; width:100%; display:flex; flex-direction:column; gap:22px; }
+  .app-header{ text-align:center; margin-bottom:4px; }
+  .app-header h1{ font-size:32px; }
+  .app-header .tagline{ color:var(--muted); font-size:13.5px; letter-spacing:0.06em; text-transform:uppercase; }
+  .hidden{ display:none !important; }
 
-    .lobby-player-list { list-style: none; padding: 0; margin: 10px 0; }
-    .lobby-player-item {
-      background-color: #0f172a; padding: 10px 15px; border-radius: 6px; margin-bottom: 8px;
-      display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);
-    }
+  .card{
+    background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    border:1px solid var(--hairline); border-radius: var(--radius-card);
+    padding:22px; box-shadow: 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  .form-group{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  label{ font-size:13px; color:var(--muted); }
+  input[type=text], select{
+    background: var(--ink); border:1px solid var(--hairline-strong); color:var(--text);
+    padding:12px 14px; border-radius: var(--radius-btn); font-size:15px; font-family:'Manrope';
+  }
+  input[type=text]:focus, select:focus, button:focus-visible{
+    outline: 2px solid var(--gold); outline-offset:2px;
+  }
 
-    .game-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
-    @media (max-width: 900px) { .game-layout { grid-template-columns: 1fr; } }
-    .game-main { display: flex; flex-direction: column; gap: 20px; min-width:0; }
+  .btn{
+    background: linear-gradient(180deg, #E7CE8E, var(--gold)); color:#241B08; border:none;
+    padding:12px 20px; border-radius: var(--radius-btn); font-weight:700; cursor:pointer;
+    font-family:'Manrope'; letter-spacing:0.01em; font-size:14.5px; transition:filter .15s ease, transform .1s ease;
+  }
+  .btn:hover:not(:disabled){ filter:brightness(1.08); }
+  .btn:active:not(:disabled){ transform:translateY(1px); }
+  .btn:disabled{ background:#333747; color:#767c8c; cursor:not-allowed; }
+  .btn-outline{ background:transparent; border:1px solid var(--hairline-strong); color:var(--text); }
+  .btn-outline:hover:not(:disabled){ border-color: var(--gold); }
+  .btn-success{ background: linear-gradient(180deg, #6FD3A8, var(--success)); color:#04251A; }
+  .btn-danger{ background: linear-gradient(180deg, #F0938D, var(--danger)); color:#3A0F0C; }
+  .btn-warn{ background: linear-gradient(180deg, #F0CB84, var(--warn)); color:#3A2A05; }
+  .btn-sm{ padding:8px 14px; font-size:13px; }
+  .error-msg{ color:var(--danger); font-size:13px; margin-top:8px; min-height:16px; }
 
-    .player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 10px; }
-    .player-card {
-      background-color: #0f172a; border: 2px solid var(--border-color); border-radius: 8px;
-      padding: 12px; position: relative;
-    }
-    .player-card.active-turn { border-color: var(--accent-color); box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
-    .player-card.eliminated { opacity: 0.4; }
-    .position-badge {
-      position: absolute; top: 8px; right: 8px; background-color: var(--border-color);
-      font-size: 12px; padding: 2px 6px; border-radius: 4px;
-    }
-    .coins-badge { color: var(--warn-color); font-weight:bold; }
-    .influence-pips { display:flex; gap:4px; margin-top:6px; }
-    .pip { width:14px; height:14px; border-radius:50%; background: var(--success-color); }
-    .pip.dead { background: var(--danger-color); opacity:0.5; }
-    .revealed-roles { font-size:11px; color:#94a3b8; margin-top:4px; }
+  .lobby-player-list{ list-style:none; padding:0; margin:10px 0; }
+  .lobby-player-item{
+    background: var(--ink); padding:11px 15px; border-radius: var(--radius-btn); margin-bottom:8px;
+    display:flex; justify-content:space-between; align-items:center; border:1px solid var(--hairline);
+  }
 
-    .action-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-    .action-btn {
-      display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;
-      border-radius: 8px; border: 2px solid transparent; color: white; font-weight: bold;
-      text-align: left; cursor: pointer; width: 100%; font-size: 14px; font-family: inherit;
-    }
-    .action-btn.real-role { background-color: rgba(34, 197, 94, 0.15); border-color: var(--success-color); color: #4ade80; }
-    .action-btn.bluff-role { background-color: rgba(239, 68, 68, 0.15); border-color: var(--danger-color); color: #f87171; }
-    .action-btn.neutral-role { background-color: rgba(148, 163, 184, 0.12); border-color: var(--border-color); color: #cbd5e1; }
-    .action-btn:disabled { opacity: 0.35; cursor: not-allowed; border-color: var(--border-color); color: #94a3b8; background-color: transparent; }
-    .badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; flex-shrink:0; margin-left:10px; }
-    .badge-real { background-color: var(--success-color); color: black; }
-    .badge-bluff { background-color: var(--danger-color); color: white; }
-    .badge-neutral { background-color: var(--border-color); color: #e2e8f0; }
+  .game-layout{ display:grid; grid-template-columns:1fr 320px; gap:22px; align-items:start; }
+  @media (max-width:900px){ .game-layout{ grid-template-columns:1fr; } }
+  .game-main{ display:flex; flex-direction:column; gap:22px; min-width:0; }
 
-    .status-bar { display: flex; justify-content: space-between; align-items: center; background-color: #0f172a; padding: 10px 15px; border-radius: 6px; flex-wrap:wrap; gap:8px; }
-    #log-box { height: 130px; overflow-y: auto; background-color: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 13px; }
-    .log-entry { margin-bottom: 4px; }
+  .status-bar{ display:flex; justify-content:space-between; align-items:center; background:var(--ink); padding:12px 16px; border-radius:var(--radius-btn); flex-wrap:wrap; gap:8px; border:1px solid var(--hairline); }
+  .status-bar .coins-badge{ color:var(--gold); font-weight:700; }
 
-    .target-panel { border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-top: -4px; background:#0f172a; }
-    .target-panel-title { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
-    .target-choice-btn {
-      display: block; width: 100%; text-align: left; background: transparent; border: 1px solid var(--border-color);
-      color: white; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; cursor: pointer; font-family: inherit;
-    }
-    .target-choice-btn:hover { border-color: var(--accent-color); }
+  .player-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:14px; margin-top:12px; }
+  .player-card{
+    background: var(--ink); border:1px solid var(--hairline-strong); border-radius:var(--radius-btn);
+    padding:14px; position:relative;
+  }
+  .player-card.active-turn{ border-color: var(--gold); animation: turnGlow 2.4s ease-in-out infinite; }
+  @keyframes turnGlow{
+    0%,100%{ box-shadow: 0 0 0 0 rgba(201,162,39,0); }
+    50%{ box-shadow: 0 0 0 6px rgba(201,162,39,0.14); }
+  }
+  @media (prefers-reduced-motion: reduce){ .player-card.active-turn{ animation:none; } }
+  .player-card.eliminated{ opacity:0.4; }
+  .position-badge{ position:absolute; top:10px; right:10px; background:var(--surface-2); font-size:11px; padding:3px 7px; border-radius:5px; color:var(--muted); }
+  .influence-pips{ display:flex; gap:4px; margin:8px 0 6px; }
+  .pip{ width:13px; height:13px; border-radius:50%; background: var(--success); }
+  .pip.dead{ background: var(--danger); opacity:0.5; }
+  .hand-seals{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .revealed-roles{ font-size:11px; color:var(--muted); margin-top:6px; }
 
-    .pending-banner {
-      background: rgba(59,130,246,0.1); border: 1px solid var(--accent-color); border-radius: 8px;
-      padding: 14px; margin-top: 10px;
-    }
-    .pending-banner .ptitle { font-weight:bold; margin-bottom:10px; }
-    .pending-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-    .waiting-note { color:#94a3b8; font-size:13px; margin-top:8px; }
+  .action-list{ display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+  .action-btn{
+    display:flex; justify-content:space-between; align-items:center; gap:10px; padding:13px 16px;
+    border-radius: var(--radius-btn); border:1px solid var(--hairline-strong); color:var(--text); font-weight:700;
+    text-align:left; cursor:pointer; width:100%; font-size:14px; font-family:'Manrope'; background:var(--ink);
+    transition: border-color .15s ease;
+  }
+  .action-btn .alabel{ display:flex; flex-direction:column; gap:2px; }
+  .action-btn .adesc{ font-size:11.5px; font-weight:500; color:var(--muted); }
+  .action-btn.real-role{ border-color: var(--success); }
+  .action-btn.real-role .adesc{ color:#8fd8bb; }
+  .action-btn.bluff-role{ border-color: var(--danger); }
+  .action-btn.bluff-role .adesc{ color:#e6a29d; }
+  .action-btn.neutral-role{ border-color: var(--hairline-strong); }
+  .action-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  .badge{ font-size:11px; padding:4px 9px; border-radius:100px; text-transform:uppercase; letter-spacing:0.03em; flex-shrink:0; font-weight:700; }
+  .badge-real{ background: var(--success); color:#04251A; }
+  .badge-bluff{ background: var(--danger); color:#3A0F0C; }
+  .badge-neutral{ background: var(--surface-2); color:var(--muted); }
 
-    .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 10px; }
-    .video-tile { position: relative; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); aspect-ratio: 4/3; }
-    .video-tile video { width: 100%; height: 100%; object-fit: cover; }
-    .video-tile .vlabel { position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,0.6); font-size: 11px; padding: 2px 6px; border-radius: 4px; }
-    .cam-controls { display:flex; gap:10px; margin-top:10px; }
+  #log-box{ height:130px; overflow-y:auto; background:var(--ink); border:1px solid var(--hairline); border-radius:var(--radius-btn); padding:12px; font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--muted); }
+  .log-entry{ margin-bottom:5px; }
 
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(10,6,16,0.92); z-index: 200;
-      display: flex; align-items: center; justify-content: center; padding: 24px;
-    }
-    .modal-box { background: var(--card-bg); border:1px solid var(--border-color); border-radius: 12px; padding: 26px; max-width: 480px; width:100%; text-align:center; }
-    .modal-box h3 { margin-bottom: 10px; }
-    .modal-box p { color:#94a3b8; font-size:14px; margin-bottom:18px; }
-    .role-choice-grid { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom: 18px; }
-    .role-choice-card {
-      width: 100px; padding: 14px 8px; border-radius: 10px; border: 2px solid var(--border-color);
-      cursor: pointer; background:#0f172a; font-size:13px;
-    }
-    .role-choice-card.selected { border-color: var(--success-color); background: rgba(34,197,94,0.12); }
-    .role-choice-card .ricon { font-size: 26px; margin-bottom:6px; }
+  .target-panel{ border:1px solid var(--hairline-strong); border-radius:var(--radius-btn); padding:10px; margin-top:-2px; background:var(--ink); }
+  .target-panel-title{ font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .target-choice-btn{
+    display:block; width:100%; text-align:left; background:var(--surface); border:1px solid var(--hairline);
+    color:var(--text); padding:9px 11px; border-radius:8px; margin-bottom:6px; cursor:pointer; font-family:'Manrope'; font-size:13.5px;
+  }
+  .target-choice-btn:hover{ border-color: var(--gold); }
 
-    .info-panel { position: sticky; top: 20px; }
-    .info-panel summary { cursor: pointer; font-weight: bold; font-size: 16px; padding: 4px 0; }
-    .role-info { border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 10px; }
-    .role-info-item { display:flex; gap:10px; margin-bottom: 12px; }
-    .role-info-item .ricon { font-size: 22px; }
-    .role-info-item .rname { font-weight:bold; color: var(--accent-color); }
-    .role-info-item .rdesc { font-size: 12.5px; color: #cbd5e1; margin-top:2px; }
-    .rule-block { font-size: 12.5px; color: #cbd5e1; margin-bottom: 10px; line-height:1.5; }
-    .rule-block strong { color: var(--warn-color); }
-  </style>
+  .pending-banner{ background:rgba(201,162,39,0.07); border:1px solid rgba(201,162,39,0.35); border-radius:var(--radius-btn); padding:15px; margin-top:12px; }
+  .pending-banner .ptitle{ font-weight:700; margin-bottom:10px; }
+  .pending-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .waiting-note{ color:var(--muted); font-size:13px; margin-top:6px; }
+
+  .video-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:12px; margin-top:12px; }
+  .video-tile{ position:relative; background:#000; border-radius:var(--radius-btn); overflow:hidden; border:1px solid var(--hairline-strong); aspect-ratio:4/3; }
+  .video-tile video{ width:100%; height:100%; object-fit:cover; }
+  .video-tile .vlabel{ position:absolute; bottom:6px; left:6px; background:rgba(0,0,0,0.65); font-size:11px; padding:3px 7px; border-radius:5px; }
+  .tap-to-play{
+    position:absolute; inset:0; width:100%; height:100%; background:rgba(12,14,20,0.75); border:none; color:#fff;
+    font-family:'Manrope'; font-weight:700; font-size:13px; cursor:pointer;
+  }
+  .cam-controls{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+  .cam-note{ font-size:12px; color:var(--muted); margin-top:8px; }
+
+  .modal-overlay{ position:fixed; inset:0; background:rgba(6,7,11,0.88); z-index:200; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .modal-box{ background: linear-gradient(180deg, var(--surface), var(--surface-2)); border:1px solid var(--hairline-strong); border-radius:var(--radius-card); padding:28px; max-width:480px; width:100%; text-align:center; }
+  .modal-box h3{ margin-bottom:8px; font-size:20px; }
+  .modal-box p{ color:var(--muted); font-size:13.5px; margin-bottom:18px; }
+  .role-choice-grid{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-bottom:18px; }
+  .role-choice-card{
+    width:100px; padding:14px 8px; border-radius:12px; border:2px solid var(--hairline-strong);
+    cursor:pointer; background:var(--ink); font-size:12.5px; font-weight:600; display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .role-choice-card.selected{ border-color: var(--success); background: rgba(63,169,126,0.1); }
+
+  .seal{ display:inline-flex; align-items:center; justify-content:center; border-radius:50%; flex-shrink:0;
+    background: radial-gradient(circle at 35% 30%, var(--seal-color), var(--seal-deep) 78%);
+    box-shadow: inset 0 2px 3px rgba(255,255,255,0.28), inset 0 -3px 6px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.35);
+  }
+  .seal svg{ fill:#12141B; }
+  .seal svg .seal-cut{ fill: var(--seal-deep); }
+  .seal.hidden{ background: radial-gradient(circle at 35% 30%, #3A3F4E, #14161D 78%); }
+  .seal.hidden .qmark{ color:#6B7280; font-weight:800; font-family:'Manrope'; }
+  .seal-label{ font-size:11.5px; color:var(--muted); text-align:center; }
+
+  .info-panel{ position:sticky; top:24px; }
+  .info-panel summary{ cursor:pointer; font-weight:700; font-size:15.5px; padding:2px 0; font-family:'Cinzel',serif; letter-spacing:0.01em; }
+  .role-info{ border-top:1px solid var(--hairline); padding-top:12px; margin-top:12px; }
+  .role-info-item{ display:flex; gap:12px; margin-bottom:14px; align-items:flex-start; }
+  .role-info-item .rname{ font-weight:700; color:var(--text); font-size:13.5px; }
+  .role-info-item .rdesc{ font-size:12px; color:var(--muted); margin-top:2px; line-height:1.5; }
+  .rule-block{ font-size:12.5px; color:#C7CBDA; margin-bottom:12px; line-height:1.55; }
+  .rule-block strong{ color:var(--warn); }
+</style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Klassenspiel</h1>
+  <div class="app-header">
+    <h1>Klassenspiel</h1>
+    <div class="tagline">Bluffen · Anfechten · Überleben</div>
+  </div>
 
   <!-- ==================== ANSICHT 1: ANMELDUNG / RAUMERSTELLUNG ==================== -->
   <div id="setup-screen" class="card">
     <h2>Spiel betreten oder Raum erstellen</h2>
     <div class="form-group">
-      <label for="player-name-input">Dein Name:</label>
+      <label for="player-name-input">Dein Name</label>
       <input type="text" id="player-name-input" placeholder="Name eingeben..." value="">
     </div>
-    <hr style="border-color: var(--border-color); margin: 20px 0;">
-    <div style="margin-bottom: 20px;">
-      <h3>Neuen Raum erstellen (Raumeröffner)</h3>
+    <hr style="border-color: var(--hairline); margin: 22px 0;">
+    <div style="margin-bottom: 22px;">
+      <h3 style="font-size:16px;">Neuen Raum erstellen</h3>
       <div class="form-group">
-        <label for="max-players-select">Maximale Spieleranzahl:</label>
+        <label for="max-players-select">Maximale Spieleranzahl</label>
         <select id="max-players-select">
           <option value="2">2 Spieler</option>
           <option value="3">3 Spieler</option>
@@ -167,9 +209,9 @@
       <button id="create-room-btn" class="btn btn-success">Raum erstellen</button>
     </div>
     <div>
-      <h3>Bestehendem Raum beitreten</h3>
+      <h3 style="font-size:16px;">Bestehendem Raum beitreten</h3>
       <div class="form-group">
-        <label for="room-code-input">Raum-Code:</label>
+        <label for="room-code-input">Raum-Code</label>
         <input type="text" id="room-code-input" placeholder="z.B. X7A9" style="text-transform: uppercase;">
       </div>
       <button id="join-room-btn" class="btn">Raum beitreten</button>
@@ -180,14 +222,14 @@
   <!-- ==================== ANSICHT 2: LOBBY ==================== -->
   <div id="lobby-screen" class="card hidden">
     <h2>Lobby</h2>
-    <p>Raum-Code: <strong id="lobby-code-display" style="color: var(--accent-color); font-size: 18px;">-</strong> <span style="color:#94a3b8; font-size:13px;">(an Mitspieler weitergeben)</span></p>
-    <h3>Anwesende Spieler (<span id="player-count">0</span>/<span id="max-player-count">0</span>):</h3>
+    <p>Raum-Code: <strong class="mono" id="lobby-code-display" style="color: var(--gold); font-size: 18px;">-</strong> <span style="color:var(--muted); font-size:13px;">(an Mitspieler weitergeben)</span></p>
+    <h3 style="font-size:15px;">Anwesende Spieler (<span id="player-count">0</span>/<span id="max-player-count">0</span>)</h3>
     <ul class="lobby-player-list" id="lobby-player-list"></ul>
-    <div style="margin-top: 20px;" id="host-controls">
-      <button id="start-game-btn" class="btn btn-success">🚀 Spiel starten (Raumeröffner)</button>
+    <div style="margin-top: 18px;" id="host-controls">
+      <button id="start-game-btn" class="btn btn-success">Spiel starten</button>
     </div>
-    <div id="guest-waiting-msg" class="hidden" style="color: #94a3b8; font-style: italic;">
-      Warten auf den Raumeröffner, um das Spiel zu starten...
+    <div id="guest-waiting-msg" class="hidden" style="color: var(--muted); font-style: italic; font-size:14px;">
+      Warten auf den Raumeröffner, um das Spiel zu starten …
     </div>
   </div>
 
@@ -198,40 +240,41 @@
 
         <div class="card">
           <div class="status-bar">
-            <div>Du: <strong id="my-name-display">-</strong> (Nr. <span id="my-position-display">-</span>) — <span class="coins-badge" id="my-coins-display">0 Münzen</span></div>
-            <div>Am Zug: <span id="current-player-turn" style="font-weight: bold; color: var(--accent-color);">-</span></div>
+            <div>Du: <strong id="my-name-display">-</strong> (Nr. <span id="my-position-display">-</span>) — <span class="coins-badge mono" id="my-coins-display">0 Münzen</span></div>
+            <div>Am Zug: <span id="current-player-turn" style="font-weight: 700; color: var(--gold);">-</span></div>
           </div>
           <div id="pending-area"></div>
         </div>
 
         <div class="card" id="actions-card">
-          <h2>Aktionen</h2>
-          <p style="font-size: 13px; color: #94a3b8;">Grün = deine echte Klasse | Rot = <strong style="color: var(--danger-color);">Bluff</strong> | Grau = für alle frei</p>
+          <h2 style="font-size:18px;">Aktionen</h2>
+          <p style="font-size: 13px; color: var(--muted);">Grün = deine echte Klasse · Rot = <strong style="color: var(--danger);">Bluff</strong> · Grau = für alle frei</p>
           <div class="action-list" id="action-container"></div>
         </div>
 
         <div class="card">
-          <h2>Spieler</h2>
+          <h2 style="font-size:18px;">Spieler</h2>
           <div class="player-grid" id="player-grid"></div>
         </div>
 
         <div class="card">
-          <h2>Kamera &amp; Mikrofon</h2>
-          <div class="cam-controls"><button id="cam-toggle-btn" class="btn">Kamera/Mikro aktivieren</button></div>
+          <h2 style="font-size:18px;">Kamera &amp; Mikrofon</h2>
+          <div class="cam-controls"><button id="cam-toggle-btn" class="btn btn-outline">Kamera/Mikro aktivieren</button></div>
+          <div class="cam-note">Benötigt eine sichere HTTPS-Verbindung und Zugriff auf Kamera/Mikrofon. Funktioniert am zuverlässigsten, wenn alle im selben WLAN sind.</div>
           <div class="video-grid" id="video-grid"></div>
         </div>
 
         <div class="card">
-          <h2>Spielprotokoll</h2>
+          <h2 style="font-size:18px;">Spielprotokoll</h2>
           <div id="log-box"></div>
         </div>
       </div>
 
       <aside class="info-panel card">
         <details open>
-          <summary>ℹ️ Spielregeln</summary>
-          <div class="rule-block">
-            Jeder startet mit <strong>2 Münzen</strong> und <strong>2 verdeckten Klassen</strong> (= deinem Einfluss). Verlierst du beide, scheidest du aus. Du darfst die Fähigkeit jeder Klasse behaupten, egal ob du sie wirklich hast — <strong>Bluffen ist erlaubt</strong>.
+          <summary>Spielregeln</summary>
+          <div class="rule-block" style="margin-top:12px;">
+            Jeder startet mit <strong>2 Münzen</strong> und <strong>2 verdeckten Klassen</strong> (= deinem Einfluss). Verlierst du beide, scheidest du aus. Du darfst jede Klassen-Fähigkeit behaupten, egal ob du sie wirklich besitzt — <strong>Bluffen ist erlaubt</strong>.
           </div>
           <div class="role-info" id="role-info-list"></div>
           <div class="rule-block" style="margin-top:14px;">
@@ -241,10 +284,10 @@
             Coup: 7 Münzen zahlen, Ziel verliert sofort 1 Einfluss — nicht block-/anfechtbar. <strong>Ab 10 Münzen Pflicht.</strong>
           </div>
           <div class="rule-block">
-            <strong>Anfechten:</strong> Wer eine Aktion/Block anzweifelt, fordert den Beweis. Kann die Karte gezeigt werden, verliert der Anfechter 1 Einfluss (Karte wird getauscht). Kann sie nicht gezeigt werden, verliert der Behauptende 1 Einfluss und die Aktion scheitert.
+            <strong>Anfechten:</strong> Wer eine Aktion oder einen Block anzweifelt, fordert den Beweis. Kann die Karte gezeigt werden, verliert der Anfechtende 1 Einfluss (Karte wird getauscht). Kann sie nicht gezeigt werden, verliert der Behauptende 1 Einfluss und die Aktion scheitert.
           </div>
           <div class="rule-block">
-            <strong>Mordanschlag-Sonderfall:</strong> Wird die Behauptung „Bluthund" erfolgreich angefochten (Karte war echt), verliert der Anfechter <strong>2 Einfluss auf einmal</strong> — einmal für die verlorene Anfechtung, einmal weil der Anschlag danach trotzdem trifft.
+            <strong>Mordanschlag-Sonderfall:</strong> Wird „Bluthund" erfolgreich angefochten (Karte war echt), verliert der Anfechtende <strong>2 Einfluss auf einmal</strong> — einmal für die verlorene Anfechtung, einmal weil der Anschlag danach trotzdem trifft. Dasselbe gilt, wenn ein Bodyguard-Block bluffte und aufflog.
           </div>
         </details>
       </aside>
@@ -252,19 +295,54 @@
   </div>
 </div>
 
-<!-- Private Modals -->
 <div id="modal-root"></div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  // ============ Rollen & Aktionen (client-seitig, muss zu server.js passen) ============
+  // ============ Rollen: Namen, Farben, eigene SVG-Siegel-Symbole ============
+  // Jedes Symbol ist eine selbst gezeichnete Vektor-Grafik (kein Foto, kein fremdes Material).
   const ROLES = {
-    kanzler:         { name: 'Kanzler',         icon: '🎩', action: 'Steuer (+3 Münzen)',        blocks: 'Entwicklungshilfe' },
-    strassenraeuber:  { name: 'Straßenräuber',   icon: '💰', action: 'Raubzug (klaut 2 Münzen)',  blocks: 'Raubzug' },
-    bluthund:        { name: 'Bluthund',        icon: '🔪', action: 'Mordanschlag (zahlt 3, eliminiert Einfluss)', blocks: '—' },
-    bodyguard:       { name: 'Bodyguard',       icon: '🛡️', action: '—',                          blocks: 'Mordanschlag' },
-    spion:           { name: 'Spion',           icon: '🕵️', action: 'Austausch (Karten tauschen)', blocks: 'Raubzug' }
+    kanzler: {
+      name: 'Kanzler', action: 'Steuern — nimmt 3 Münzen', blocks: 'Entwicklungshilfe',
+      color: '#C9A227', deep: '#6E5310',
+      svg: '<path d="M8 46 L13 24 L23 35 L32 15 L41 35 L51 24 L56 46 Z"/><rect x="8" y="46" width="48" height="7" rx="2"/><circle cx="32" cy="13" r="3"/><circle cx="13" cy="21" r="2.4"/><circle cx="51" cy="21" r="2.4"/>'
+    },
+    strassenraeuber: {
+      name: 'Straßenräuber', action: 'Raubzug — klaut 2 Münzen', blocks: 'Raubzug',
+      color: '#C4453F', deep: '#611D1A',
+      svg: '<path d="M6 27 C6 19 15 15 32 15 C49 15 58 19 58 27 C58 36 49 42 39 40 C35 39 33 34 32 34 C31 34 29 39 25 40 C15 42 6 36 6 27 Z"/><circle class="seal-cut" cx="21" cy="27" r="5.2"/><circle class="seal-cut" cx="43" cy="27" r="5.2"/>'
+    },
+    bluthund: {
+      name: 'Bluthund', action: 'Mordanschlag — zahlt 3, eliminiert Einfluss', blocks: '— (keine Blockfunktion)',
+      color: '#8064BE', deep: '#241A3D',
+      svg: '<path d="M32 9 C19 9 11 19 11 31 C11 39 15 45 21 49 L19 58 L28 51 C30.7 52 33.3 52 36 51 L45 58 L43 49 C49 45 53 39 53 31 C53 19 45 9 32 9 Z"/><path d="M21 29 L14 20 L23 25 Z"/><path d="M43 29 L50 20 L41 25 Z"/><circle class="seal-cut" cx="26" cy="30" r="2.6"/><circle class="seal-cut" cx="38" cy="30" r="2.6"/>'
+    },
+    bodyguard: {
+      name: 'Bodyguard', action: '— (keine aktive Aktion)', blocks: 'Mordanschlag',
+      color: '#4F84A6', deep: '#1B3244',
+      svg: '<path d="M32 6 L55 14 L55 30 C55 47 44 57 32 61 C20 57 9 47 9 30 L9 14 Z"/><rect class="seal-cut" x="29" y="17" width="6" height="30" rx="2"/><path class="seal-cut" d="M23 21 L41 21 L32 28 Z"/>'
+    },
+    spion: {
+      name: 'Spion', action: 'Austausch — Karten tauschen', blocks: 'Raubzug',
+      color: '#3E9C82', deep: '#123A2F',
+      svg: '<path d="M5 32 C13 17 25 11 32 11 C39 11 51 17 59 32 C51 47 39 53 32 53 C25 53 13 47 5 32 Z"/><circle class="seal-cut" cx="32" cy="32" r="10.5"/><circle cx="32" cy="32" r="5"/>'
+    }
   };
+
+  function sealHTML(roleKey, size) {
+    size = size || 44;
+    const r = ROLES[roleKey];
+    const s = Math.round(size * 0.6);
+    return `<span class="seal" style="--seal-color:${r.color}; --seal-deep:${r.deep}; width:${size}px; height:${size}px;">
+      <svg viewBox="0 0 64 64" width="${s}" height="${s}">${r.svg}</svg>
+    </span>`;
+  }
+  function hiddenSealHTML(size) {
+    size = size || 40;
+    return `<span class="seal hidden" style="width:${size}px; height:${size}px;"><span class="qmark" style="font-size:${Math.round(size*0.45)}px;">?</span></span>`;
+  }
+
+  // ============ Aktionen (muss zu server.js passen) ============
   const ACTIONS = {
     einkommen:     { label: 'Einkommen',         desc: 'Basis: +1 Münze',            classKey: null,              targeted: false, challengeable: false, blockable: false, cost: 0 },
     fremde_hilfe:  { label: 'Entwicklungshilfe', desc: 'Basis: +2 Münzen',           classKey: null,              targeted: false, challengeable: false, blockable: true,  blockRoles: ['kanzler'], blockEligibility: 'anyone', cost: 0 },
@@ -283,10 +361,11 @@
 
   // Info-Panel Rollenliste füllen
   const roleInfoList = document.getElementById('role-info-list');
-  Object.values(ROLES).forEach(r => {
+  Object.keys(ROLES).forEach(k => {
+    const r = ROLES[k];
     const div = document.createElement('div');
     div.className = 'role-info-item';
-    div.innerHTML = `<div class="ricon">${r.icon}</div><div><div class="rname">${r.name}</div><div class="rdesc">Aktion: ${r.action}<br>Blockt: ${r.blocks}</div></div>`;
+    div.innerHTML = `${sealHTML(k, 40)}<div><div class="rname">${r.name}</div><div class="rdesc">Aktion: ${r.action}<br>Blockt: ${r.blocks}</div></div>`;
     roleInfoList.appendChild(div);
   });
 
@@ -335,7 +414,7 @@
       const li = document.createElement('li');
       li.className = 'lobby-player-item';
       li.innerHTML = `<span><strong>${escapeHtml(p.name)}</strong> ${p.id === myId ? '(Du)' : ''}</span>
-        <span style="font-size: 12px; color: #94a3b8;">${p.id === s.hostId ? '👑 Raumeröffner' : 'Bereit'}</span>`;
+        <span style="font-size: 12px; color: var(--muted);">${p.id === s.hostId ? 'Raumeröffner' : 'Bereit'}</span>`;
       lobbyPlayerList.appendChild(li);
     });
   }
@@ -361,7 +440,7 @@
   socket.on('log', (msg) => {
     const box = document.getElementById('log-box');
     const entry = document.createElement('div');
-    entry.className = 'log-entry'; entry.textContent = '> ' + msg;
+    entry.className = 'log-entry'; entry.textContent = '› ' + msg;
     box.prepend(entry);
   });
   socket.on('gameOver', ({ winnerName }) => { showGameOverModal(winnerName); });
@@ -413,7 +492,7 @@
       const btn = document.createElement('button');
       btn.className = `action-btn ${cls}`;
       btn.disabled = disabled;
-      btn.innerHTML = `<div><span>${def.label}</span><div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">${def.desc}</div></div>
+      btn.innerHTML = `<span class="alabel"><span>${def.label}</span><span class="adesc">${def.desc}</span></span>
         <span class="badge ${badgeCls}">${badgeTxt}</span>`;
       btn.addEventListener('click', () => onActionClick(actionKey));
       container.appendChild(btn);
@@ -422,7 +501,7 @@
     });
     if (forced) {
       const w = document.createElement('div');
-      w.className = 'waiting-note'; w.style.color = 'var(--warn-color)';
+      w.className = 'waiting-note'; w.style.color = 'var(--warn)';
       w.textContent = '10+ Münzen: Du musst einen Coup ausführen.';
       container.appendChild(w);
     }
@@ -478,8 +557,8 @@
             bb.textContent = `Blocken: ${ROLES[rk].name}`; bb.onclick = () => socket.emit('respondBlock', { role: rk }); row.appendChild(bb);
           });
         }
-        const pb = document.createElement('button'); pb.className = 'btn btn-sm';
-        pb.textContent = 'Passen'; pb.onclick = () => socket.emit('respondPass'); row.appendChild(pb);
+        const pb = document.createElement('button'); pb.className = 'btn btn-outline btn-sm';
+        pb.textContent = 'Aktion akzeptieren'; pb.onclick = () => socket.emit('respondPass'); row.appendChild(pb);
         banner.appendChild(row);
       } else {
         const waitingNames = state.players.filter(pl => pl.id !== p.actorId && !pl.eliminated && !p.responded.includes(pl.id)).map(pl => pl.name);
@@ -495,8 +574,8 @@
         const row = document.createElement('div'); row.className = 'pending-actions';
         const cb = document.createElement('button'); cb.className = 'btn btn-danger btn-sm';
         cb.textContent = 'Block anfechten'; cb.onclick = () => socket.emit('blockRespondChallenge'); row.appendChild(cb);
-        const pb = document.createElement('button'); pb.className = 'btn btn-sm';
-        pb.textContent = 'Akzeptieren'; pb.onclick = () => socket.emit('blockRespondPass'); row.appendChild(pb);
+        const pb = document.createElement('button'); pb.className = 'btn btn-outline btn-sm';
+        pb.textContent = 'Block akzeptieren'; pb.onclick = () => socket.emit('blockRespondPass'); row.appendChild(pb);
         banner.appendChild(row);
       } else {
         const waitingNames = state.players.filter(pl => pl.id !== p.block.playerId && !pl.eliminated && !p.blockResponded.includes(pl.id)).map(pl => pl.name);
@@ -523,20 +602,20 @@
       const card = document.createElement('div');
       card.className = `player-card ${ap && ap.id === p.id ? 'active-turn' : ''} ${p.eliminated ? 'eliminated' : ''}`;
       const isSelf = p.id === myId;
-      let handHtml = '';
+      let handHtml;
       if (isSelf) {
-        handHtml = myHand.map(c => c.alive ? `<span title="verdeckt">${ROLES[c.role].icon} ${ROLES[c.role].name}</span>` : '').filter(Boolean).join(', ');
+        handHtml = myHand.filter(c => c.alive).map(c => sealHTML(c.role, 34)).join('');
       } else {
-        handHtml = Array(p.influence).fill('❓').join(' ');
+        handHtml = Array.from({length: p.influence}).map(() => hiddenSealHTML(34)).join('');
       }
       const pips = Array.from({length: 2}).map((_, i) => `<div class="pip ${i < p.influence ? '' : 'dead'}"></div>`).join('');
-      const revealedHtml = p.revealed.length ? `<div class="revealed-roles">Aufgedeckt: ${p.revealed.map(r => ROLES[r].icon + ' ' + ROLES[r].name).join(', ')}</div>` : '';
+      const revealedHtml = p.revealed.length ? `<div class="revealed-roles">Aufgedeckt: ${p.revealed.map(r => ROLES[r].name).join(', ')}</div>` : '';
       card.innerHTML = `
-        <span class="position-badge">Nr. ${p.position}</span>
-        <div style="font-weight: bold; margin-bottom: 4px;">${escapeHtml(p.name)} ${isSelf ? '(Du)' : ''} ${p.eliminated ? '☠️' : ''}</div>
-        <div class="coins-badge">${p.coins} Münzen</div>
+        <span class="position-badge mono">Nr. ${p.position}</span>
+        <div style="font-weight: 700; margin-bottom: 2px;">${escapeHtml(p.name)} ${isSelf ? '(Du)' : ''} ${p.eliminated ? '✕' : ''}</div>
+        <div class="mono" style="color:var(--gold); font-size:14px;">${p.coins} Münzen</div>
         <div class="influence-pips">${pips}</div>
-        <div style="font-size:12px; color:#94a3b8; margin-top:4px;">${handHtml}</div>
+        <div class="hand-seals">${handHtml}</div>
         ${revealedHtml}
       `;
       grid.appendChild(card);
@@ -553,7 +632,7 @@
     const grid = document.createElement('div'); grid.className = 'role-choice-grid';
     roles.forEach((role, i) => {
       const c = document.createElement('div'); c.className = 'role-choice-card';
-      c.innerHTML = `<div class="ricon">${ROLES[role].icon}</div>${ROLES[role].name}`;
+      c.innerHTML = `${sealHTML(role, 52)}<span>${ROLES[role].name}</span>`;
       c.onclick = () => { socket.emit('confirmLoseCard', { index: i }); overlay.remove(); };
       grid.appendChild(c);
     });
@@ -570,7 +649,7 @@
     const grid = document.createElement('div'); grid.className = 'role-choice-grid';
     pool.forEach((role, i) => {
       const c = document.createElement('div'); c.className = 'role-choice-card';
-      c.innerHTML = `<div class="ricon">${ROLES[role].icon}</div>${ROLES[role].name}`;
+      c.innerHTML = `${sealHTML(role, 52)}<span>${ROLES[role].name}</span>`;
       c.onclick = () => {
         if (selected.includes(i)) selected = selected.filter(x => x !== i);
         else if (selected.length < keepCount) selected.push(i);
@@ -590,7 +669,7 @@
     modalRoot.innerHTML = '';
     const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
     const box = document.createElement('div'); box.className = 'modal-box';
-    box.innerHTML = `<h3>🏆 ${winnerName ? escapeHtml(winnerName) + ' gewinnt!' : 'Spiel beendet'}</h3><p>Alle anderen Spieler haben ihren Einfluss verloren.</p>`;
+    box.innerHTML = `<h3>${winnerName ? escapeHtml(winnerName) + ' gewinnt' : 'Spiel beendet'}</h3><p>Alle anderen Spieler haben ihren Einfluss verloren.</p>`;
     if (isHost) {
       const b = document.createElement('button'); b.className = 'btn btn-success'; b.textContent = 'Zurück zur Lobby';
       b.onclick = () => { socket.emit('restartGame'); overlay.remove(); };
@@ -608,6 +687,10 @@
   const camToggleBtn = document.getElementById('cam-toggle-btn');
   const videoGrid = document.getElementById('video-grid');
 
+  function mediaSupported() {
+    return window.isSecureContext && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  }
+
   camToggleBtn.addEventListener('click', async () => {
     if (camState.enabled) {
       if (localStream) localStream.getTracks().forEach(t => t.stop());
@@ -617,12 +700,25 @@
       Object.keys(peerConnections).forEach(closePeerConnection);
       return;
     }
-    try { localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); }
-    catch (e) { alert('Kamera/Mikrofon konnten nicht aktiviert werden: ' + e.message); return; }
+    if (!mediaSupported()) {
+      alert('Kamera/Mikrofon benötigen eine sichere HTTPS-Verbindung (nicht http://) und einen Browser, der WebRTC unterstützt. Bitte prüfe, ob die Seite über https:// aufgerufen wird.');
+      return;
+    }
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
+    } catch (e) {
+      let msg = 'Kamera/Mikrofon konnten nicht aktiviert werden.';
+      if (e.name === 'NotAllowedError') msg = 'Zugriff auf Kamera/Mikrofon wurde verweigert. Bitte in den Browser- bzw. System-Einstellungen erlauben und erneut versuchen.';
+      else if (e.name === 'NotFoundError') msg = 'Es wurde keine Kamera/kein Mikrofon gefunden.';
+      else if (e.name === 'NotReadableError') msg = 'Kamera/Mikrofon werden bereits von einer anderen App verwendet.';
+      alert(msg);
+      return;
+    }
     camState.enabled = true; camToggleBtn.textContent = 'Kamera/Mikro deaktivieren';
     addVideoTile('local', 'Du', localStream, true);
     maybeConnectToPeers();
   });
+
   function addVideoTile(id, label, stream, muted) {
     let tile = document.getElementById('vt-' + id);
     if (!tile) {
@@ -630,7 +726,20 @@
       tile.innerHTML = `<video autoplay playsinline ${muted ? 'muted' : ''}></video><span class="vlabel">${escapeHtml(label)}</span>`;
       videoGrid.appendChild(tile);
     }
-    tile.querySelector('video').srcObject = stream;
+    const videoEl = tile.querySelector('video');
+    videoEl.srcObject = stream;
+    const playPromise = videoEl.play();
+    if (playPromise && playPromise.catch) {
+      playPromise.catch(() => {
+        if (!tile.querySelector('.tap-to-play')) {
+          const tap = document.createElement('button');
+          tap.className = 'tap-to-play';
+          tap.textContent = 'Tippen zum Aktivieren';
+          tap.onclick = () => { videoEl.play(); tap.remove(); };
+          tile.appendChild(tap);
+        }
+      });
+    }
   }
   function maybeConnectToPeers() {
     if (!camState.enabled || !state || !state.players) return;
