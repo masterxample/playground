@@ -12,25 +12,19 @@
       --accent-color: #3b82f6;
       --success-color: #22c55e;
       --danger-color: #ef4444;
+      --warn-color: #f59e0b;
       --border-color: #334155;
     }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
+      background-color: var(--bg-color); color: var(--text-color);
+      margin: 0; padding: 20px; display: flex; justify-content: center;
     }
-    .container { max-width: 900px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
-    h1, h2 { margin: 0 0 10px 0; }
+    .container { max-width: 1180px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
+    h1, h2, h3 { margin: 0 0 10px 0; }
     .card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;
+      padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     }
     .hidden { display: none !important; }
     .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
@@ -40,13 +34,15 @@
       padding: 10px; border-radius: 6px; font-size: 15px;
     }
     .btn {
-      background-color: var(--accent-color); color: white; border: none;
-      padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer;
-      transition: background-color 0.2s, opacity 0.2s;
+      background-color: var(--accent-color); color: white; border: none; padding: 10px 18px;
+      border-radius: 6px; font-weight: bold; cursor: pointer; transition: opacity 0.2s;
     }
     .btn:hover:not(:disabled) { opacity: 0.9; }
     .btn:disabled { background-color: #475569; cursor: not-allowed; opacity: 0.6; }
     .btn-success { background-color: var(--success-color); }
+    .btn-danger { background-color: var(--danger-color); }
+    .btn-warn { background-color: var(--warn-color); color:#1a1a1a; }
+    .btn-sm { padding:7px 12px; font-size:13px; }
     .error-msg { color: var(--danger-color); font-size: 13px; margin-top: 8px; min-height: 16px; }
 
     .lobby-player-list { list-style: none; padding: 0; margin: 10px 0; }
@@ -55,16 +51,26 @@
       display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);
     }
 
+    .game-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .game-layout { grid-template-columns: 1fr; } }
+    .game-main { display: flex; flex-direction: column; gap: 20px; min-width:0; }
+
     .player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 10px; }
     .player-card {
       background-color: #0f172a; border: 2px solid var(--border-color); border-radius: 8px;
       padding: 12px; position: relative;
     }
     .player-card.active-turn { border-color: var(--accent-color); box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+    .player-card.eliminated { opacity: 0.4; }
     .position-badge {
       position: absolute; top: 8px; right: 8px; background-color: var(--border-color);
       font-size: 12px; padding: 2px 6px; border-radius: 4px;
     }
+    .coins-badge { color: var(--warn-color); font-weight:bold; }
+    .influence-pips { display:flex; gap:4px; margin-top:6px; }
+    .pip { width:14px; height:14px; border-radius:50%; background: var(--success-color); }
+    .pip.dead { background: var(--danger-color); opacity:0.5; }
+    .revealed-roles { font-size:11px; color:#94a3b8; margin-top:4px; }
 
     .action-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
     .action-btn {
@@ -75,15 +81,14 @@
     .action-btn.real-role { background-color: rgba(34, 197, 94, 0.15); border-color: var(--success-color); color: #4ade80; }
     .action-btn.bluff-role { background-color: rgba(239, 68, 68, 0.15); border-color: var(--danger-color); color: #f87171; }
     .action-btn.neutral-role { background-color: rgba(148, 163, 184, 0.12); border-color: var(--border-color); color: #cbd5e1; }
-    .action-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: var(--border-color); color: #94a3b8; background-color: transparent; }
-
+    .action-btn:disabled { opacity: 0.35; cursor: not-allowed; border-color: var(--border-color); color: #94a3b8; background-color: transparent; }
     .badge { font-size: 12px; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; flex-shrink:0; margin-left:10px; }
     .badge-real { background-color: var(--success-color); color: black; }
     .badge-bluff { background-color: var(--danger-color); color: white; }
     .badge-neutral { background-color: var(--border-color); color: #e2e8f0; }
 
-    .status-bar { display: flex; justify-content: space-between; align-items: center; background-color: #0f172a; padding: 10px 15px; border-radius: 6px; }
-    #log-box { height: 120px; overflow-y: auto; background-color: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 13px; }
+    .status-bar { display: flex; justify-content: space-between; align-items: center; background-color: #0f172a; padding: 10px 15px; border-radius: 6px; flex-wrap:wrap; gap:8px; }
+    #log-box { height: 130px; overflow-y: auto; background-color: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 13px; }
     .log-entry { margin-bottom: 4px; }
 
     .target-panel { border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-top: -4px; background:#0f172a; }
@@ -94,12 +99,44 @@
     }
     .target-choice-btn:hover { border-color: var(--accent-color); }
 
+    .pending-banner {
+      background: rgba(59,130,246,0.1); border: 1px solid var(--accent-color); border-radius: 8px;
+      padding: 14px; margin-top: 10px;
+    }
+    .pending-banner .ptitle { font-weight:bold; margin-bottom:10px; }
+    .pending-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .waiting-note { color:#94a3b8; font-size:13px; margin-top:8px; }
+
     .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 10px; }
     .video-tile { position: relative; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); aspect-ratio: 4/3; }
     .video-tile video { width: 100%; height: 100%; object-fit: cover; }
     .video-tile .vlabel { position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,0.6); font-size: 11px; padding: 2px 6px; border-radius: 4px; }
     .cam-controls { display:flex; gap:10px; margin-top:10px; }
-    .cam-controls .btn { flex:0 0 auto; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(10,6,16,0.92); z-index: 200;
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    .modal-box { background: var(--card-bg); border:1px solid var(--border-color); border-radius: 12px; padding: 26px; max-width: 480px; width:100%; text-align:center; }
+    .modal-box h3 { margin-bottom: 10px; }
+    .modal-box p { color:#94a3b8; font-size:14px; margin-bottom:18px; }
+    .role-choice-grid { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom: 18px; }
+    .role-choice-card {
+      width: 100px; padding: 14px 8px; border-radius: 10px; border: 2px solid var(--border-color);
+      cursor: pointer; background:#0f172a; font-size:13px;
+    }
+    .role-choice-card.selected { border-color: var(--success-color); background: rgba(34,197,94,0.12); }
+    .role-choice-card .ricon { font-size: 26px; margin-bottom:6px; }
+
+    .info-panel { position: sticky; top: 20px; }
+    .info-panel summary { cursor: pointer; font-weight: bold; font-size: 16px; padding: 4px 0; }
+    .role-info { border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 10px; }
+    .role-info-item { display:flex; gap:10px; margin-bottom: 12px; }
+    .role-info-item .ricon { font-size: 22px; }
+    .role-info-item .rname { font-weight:bold; color: var(--accent-color); }
+    .role-info-item .rdesc { font-size: 12.5px; color: #cbd5e1; margin-top:2px; }
+    .rule-block { font-size: 12.5px; color: #cbd5e1; margin-bottom: 10px; line-height:1.5; }
+    .rule-block strong { color: var(--warn-color); }
   </style>
 </head>
 <body>
@@ -110,14 +147,11 @@
   <!-- ==================== ANSICHT 1: ANMELDUNG / RAUMERSTELLUNG ==================== -->
   <div id="setup-screen" class="card">
     <h2>Spiel betreten oder Raum erstellen</h2>
-
     <div class="form-group">
       <label for="player-name-input">Dein Name:</label>
       <input type="text" id="player-name-input" placeholder="Name eingeben..." value="">
     </div>
-
     <hr style="border-color: var(--border-color); margin: 20px 0;">
-
     <div style="margin-bottom: 20px;">
       <h3>Neuen Raum erstellen (Raumeröffner)</h3>
       <div class="form-group">
@@ -132,7 +166,6 @@
       </div>
       <button id="create-room-btn" class="btn btn-success">Raum erstellen</button>
     </div>
-
     <div>
       <h3>Bestehendem Raum beitreten</h3>
       <div class="form-group">
@@ -148,10 +181,8 @@
   <div id="lobby-screen" class="card hidden">
     <h2>Lobby</h2>
     <p>Raum-Code: <strong id="lobby-code-display" style="color: var(--accent-color); font-size: 18px;">-</strong> <span style="color:#94a3b8; font-size:13px;">(an Mitspieler weitergeben)</span></p>
-
     <h3>Anwesende Spieler (<span id="player-count">0</span>/<span id="max-player-count">0</span>):</h3>
     <ul class="lobby-player-list" id="lobby-player-list"></ul>
-
     <div style="margin-top: 20px;" id="host-controls">
       <button id="start-game-btn" class="btn btn-success">🚀 Spiel starten (Raumeröffner)</button>
     </div>
@@ -162,416 +193,483 @@
 
   <!-- ==================== ANSICHT 3: LAUFENDES SPIEL ==================== -->
   <div id="game-screen" class="hidden">
+    <div class="game-layout">
+      <div class="game-main">
 
-    <div class="card" style="margin-bottom: 20px;">
-      <h2>Dein Profil</h2>
-      <div style="display: flex; gap: 20px; align-items: center; flex-wrap:wrap;">
-        <div>Spieler: <strong id="my-name-display">-</strong></div>
-        <div>Reihenfolge-Nummer: <strong id="my-position-display">-</strong></div>
-        <div>Klassen: <span id="my-class-display">-</span></div>
+        <div class="card">
+          <div class="status-bar">
+            <div>Du: <strong id="my-name-display">-</strong> (Nr. <span id="my-position-display">-</span>) — <span class="coins-badge" id="my-coins-display">0 Münzen</span></div>
+            <div>Am Zug: <span id="current-player-turn" style="font-weight: bold; color: var(--accent-color);">-</span></div>
+          </div>
+          <div id="pending-area"></div>
+        </div>
+
+        <div class="card" id="actions-card">
+          <h2>Aktionen</h2>
+          <p style="font-size: 13px; color: #94a3b8;">Grün = deine echte Klasse | Rot = <strong style="color: var(--danger-color);">Bluff</strong> | Grau = für alle frei</p>
+          <div class="action-list" id="action-container"></div>
+        </div>
+
+        <div class="card">
+          <h2>Spieler</h2>
+          <div class="player-grid" id="player-grid"></div>
+        </div>
+
+        <div class="card">
+          <h2>Kamera &amp; Mikrofon</h2>
+          <div class="cam-controls"><button id="cam-toggle-btn" class="btn">Kamera/Mikro aktivieren</button></div>
+          <div class="video-grid" id="video-grid"></div>
+        </div>
+
+        <div class="card">
+          <h2>Spielprotokoll</h2>
+          <div id="log-box"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="card" style="margin-bottom: 20px;">
-      <div class="status-bar">
-        <div>Status: <span style="font-weight: bold; color: var(--success-color);">Spiel läuft</span></div>
-        <div>Aktuell am Zug: <span id="current-player-turn" style="font-weight: bold; color: var(--accent-color);">-</span></div>
-      </div>
+      <aside class="info-panel card">
+        <details open>
+          <summary>ℹ️ Spielregeln</summary>
+          <div class="rule-block">
+            Jeder startet mit <strong>2 Münzen</strong> und <strong>2 verdeckten Klassen</strong> (= deinem Einfluss). Verlierst du beide, scheidest du aus. Du darfst die Fähigkeit jeder Klasse behaupten, egal ob du sie wirklich hast — <strong>Bluffen ist erlaubt</strong>.
+          </div>
+          <div class="role-info" id="role-info-list"></div>
+          <div class="rule-block" style="margin-top:14px;">
+            <strong>Basis-Aktionen</strong> (nicht anfechtbar):<br>
+            Einkommen: +1 Münze.<br>
+            Entwicklungshilfe: +2 Münzen (vom Kanzler blockbar).<br>
+            Coup: 7 Münzen zahlen, Ziel verliert sofort 1 Einfluss — nicht block-/anfechtbar. <strong>Ab 10 Münzen Pflicht.</strong>
+          </div>
+          <div class="rule-block">
+            <strong>Anfechten:</strong> Wer eine Aktion/Block anzweifelt, fordert den Beweis. Kann die Karte gezeigt werden, verliert der Anfechter 1 Einfluss (Karte wird getauscht). Kann sie nicht gezeigt werden, verliert der Behauptende 1 Einfluss und die Aktion scheitert.
+          </div>
+          <div class="rule-block">
+            <strong>Mordanschlag-Sonderfall:</strong> Wird die Behauptung „Bluthund" erfolgreich angefochten (Karte war echt), verliert der Anfechter <strong>2 Einfluss auf einmal</strong> — einmal für die verlorene Anfechtung, einmal weil der Anschlag danach trotzdem trifft.
+          </div>
+        </details>
+      </aside>
     </div>
-
-    <div class="card" style="margin-bottom: 20px;">
-      <h2>Kamera &amp; Mikrofon</h2>
-      <div class="cam-controls">
-        <button id="cam-toggle-btn" class="btn">Kamera/Mikro aktivieren</button>
-      </div>
-      <div class="video-grid" id="video-grid"></div>
-    </div>
-
-    <div class="card" style="margin-bottom: 20px;">
-      <h2>Aktionen</h2>
-      <p style="font-size: 14px; color: #94a3b8;">
-        Grün = deine echte Klasse | Rot = <strong style="color: var(--danger-color);">Bluff</strong> | Grau = jeder darf das
-      </p>
-      <div class="action-list" id="action-container"></div>
-    </div>
-
-    <div class="card" style="margin-bottom: 20px;">
-      <h2>Reihenfolge / Spieler</h2>
-      <div class="player-grid" id="player-grid"></div>
-    </div>
-
-    <div class="card">
-      <h2>Spielprotokoll</h2>
-      <div id="log-box"></div>
-    </div>
-
   </div>
 </div>
 
+<!-- Private Modals -->
+<div id="modal-root"></div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  // ============ Klassen-Definition (clientseitig, nur für Anzeige/Icons) ============
-  // Muss mit den Keys aus server.js übereinstimmen. Namen hier einfach umbenennen.
-  const CLASSES = {
-    kanzler:         { name: 'Kanzler',         icon: '🎩' },
-    strassenraeuber:  { name: 'Straßenräuber',   icon: '💰' },
-    bluthund:        { name: 'Bluthund',        icon: '🔪' },
-    bodyguard:       { name: 'Bodyguard',       icon: '🛡️' },
-    spion:           { name: 'Spion',           icon: '🕵️' }
+  // ============ Rollen & Aktionen (client-seitig, muss zu server.js passen) ============
+  const ROLES = {
+    kanzler:         { name: 'Kanzler',         icon: '🎩', action: 'Steuer (+3 Münzen)',        blocks: 'Entwicklungshilfe' },
+    strassenraeuber:  { name: 'Straßenräuber',   icon: '💰', action: 'Raubzug (klaut 2 Münzen)',  blocks: 'Raubzug' },
+    bluthund:        { name: 'Bluthund',        icon: '🔪', action: 'Mordanschlag (zahlt 3, eliminiert Einfluss)', blocks: '—' },
+    bodyguard:       { name: 'Bodyguard',       icon: '🛡️', action: '—',                          blocks: 'Mordanschlag' },
+    spion:           { name: 'Spion',           icon: '🕵️', action: 'Austausch (Karten tauschen)', blocks: 'Raubzug' }
   };
-
-  // Aktionen: muss mit ACTION_DEFS aus server.js übereinstimmen.
-  // Hinweis: Bodyguard hat keine eigene Aktion (blockt nur Anschlag) — Block-Logik folgt später.
   const ACTIONS = {
-    einkommen:     { label: 'Einkommen',        desc: 'Keine Klasse nötig',    classKey: null,              needsTarget: false, isSwap: false },
-    fremde_hilfe:  { label: 'Fremde Hilfe',     desc: 'Keine Klasse nötig',    classKey: null,              needsTarget: false, isSwap: false },
-    staatsstreich: { label: 'Staatsstreich',    desc: 'Ziel eliminieren',      classKey: null,              needsTarget: true,  isSwap: false },
-    steuer:        { label: 'Steuer',           desc: 'Kanzler-Aktion (+3)',   classKey: 'kanzler',         needsTarget: false, isSwap: false },
-    raubzug:       { label: 'Raubzug',          desc: 'Straßenräuber-Aktion (klaut 2)', classKey: 'strassenraeuber', needsTarget: true, isSwap: false },
-    anschlag:      { label: 'Anschlag',         desc: 'Bluthund-Aktion (zahlt 3)', classKey: 'bluthund',    needsTarget: true,  isSwap: false },
-    tausch:        { label: 'Klassen tauschen', desc: 'Spion-Aktion',          classKey: 'spion',           needsTarget: false, isSwap: true }
+    einkommen:     { label: 'Einkommen',         desc: 'Basis: +1 Münze',            classKey: null,              targeted: false, challengeable: false, blockable: false, cost: 0 },
+    fremde_hilfe:  { label: 'Entwicklungshilfe', desc: 'Basis: +2 Münzen',           classKey: null,              targeted: false, challengeable: false, blockable: true,  blockRoles: ['kanzler'], blockEligibility: 'anyone', cost: 0 },
+    staatsstreich: { label: 'Coup',              desc: '7 Münzen — Ziel verliert Einfluss', classKey: null,       targeted: true,  challengeable: false, blockable: false, cost: 7 },
+    steuer:        { label: 'Steuern',           desc: 'Kanzler: +3 Münzen',         classKey: 'kanzler',         targeted: false, challengeable: true,  blockable: false, cost: 0 },
+    raubzug:       { label: 'Raubzug',           desc: 'Straßenräuber: klaut 2 Münzen', classKey: 'strassenraeuber', targeted: true, challengeable: true, blockable: true, blockRoles: ['strassenraeuber','spion'], blockEligibility: 'target', cost: 0 },
+    anschlag:      { label: 'Mordanschlag',      desc: 'Bluthund: 3 Münzen, eliminiert Einfluss', classKey: 'bluthund', targeted: true, challengeable: true, blockable: true, blockRoles: ['bodyguard'], blockEligibility: 'target', cost: 3 },
+    tausch:        { label: 'Austausch',         desc: 'Spion: Karten tauschen',     classKey: 'spion',           targeted: false, challengeable: true,  blockable: false, cost: 0, isExchange: true }
   };
 
   const socket = io();
+  let myId = null, isHost = false, roomCode = '', maxPlayers = 4;
+  let myHand = [];
+  let state = null;
+  let pendingTargetAction = null;
 
-  let myId = null;
-  let isHost = false;
-  let roomCode = '';
-  let maxPlayers = 4;
-  let myClasses = [];
-  let roomState = { players: [], turnIndex: 0, started: false, hostId: null };
-  let pendingTargetAction = null; // actionKey, während Zielauswahl offen ist
+  // Info-Panel Rollenliste füllen
+  const roleInfoList = document.getElementById('role-info-list');
+  Object.values(ROLES).forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'role-info-item';
+    div.innerHTML = `<div class="ricon">${r.icon}</div><div><div class="rname">${r.name}</div><div class="rdesc">Aktion: ${r.action}<br>Blockt: ${r.blocks}</div></div>`;
+    roleInfoList.appendChild(div);
+  });
 
-  // --- DOM ---
+  // --- DOM Setup/Lobby ---
   const setupScreen = document.getElementById('setup-screen');
   const lobbyScreen = document.getElementById('lobby-screen');
   const gameScreen = document.getElementById('game-screen');
-
   const playerNameInput = document.getElementById('player-name-input');
   const maxPlayersSelect = document.getElementById('max-players-select');
   const roomCodeInput = document.getElementById('room-code-input');
-  const createRoomBtn = document.getElementById('create-room-btn');
-  const joinRoomBtn = document.getElementById('join-room-btn');
   const setupError = document.getElementById('setup-error');
-
   const lobbyCodeDisplay = document.getElementById('lobby-code-display');
   const playerCountEl = document.getElementById('player-count');
   const maxPlayerCountEl = document.getElementById('max-player-count');
   const lobbyPlayerList = document.getElementById('lobby-player-list');
   const hostControls = document.getElementById('host-controls');
   const guestWaitingMsg = document.getElementById('guest-waiting-msg');
-  const startGameBtn = document.getElementById('start-game-btn');
 
-  const myNameDisplay = document.getElementById('my-name-display');
-  const myPositionDisplay = document.getElementById('my-position-display');
-  const myClassDisplay = document.getElementById('my-class-display');
-  const currentPlayerTurnEl = document.getElementById('current-player-turn');
-  const actionContainer = document.getElementById('action-container');
-  const playerGrid = document.getElementById('player-grid');
-  const logBox = document.getElementById('log-box');
-  const camToggleBtn = document.getElementById('cam-toggle-btn');
-  const videoGrid = document.getElementById('video-grid');
-
-  // ============ Raum erstellen / beitreten ============
-  createRoomBtn.addEventListener('click', () => {
+  document.getElementById('create-room-btn').addEventListener('click', () => {
     const name = playerNameInput.value.trim() || 'Spieler';
     maxPlayers = parseInt(maxPlayersSelect.value, 10);
     socket.emit('createRoom', { name, maxPlayers });
   });
-
-  joinRoomBtn.addEventListener('click', () => {
+  document.getElementById('join-room-btn').addEventListener('click', () => {
     const name = playerNameInput.value.trim() || 'Spieler';
     const code = roomCodeInput.value.trim().toUpperCase();
     if (!code) { setupError.textContent = 'Bitte Raum-Code eingeben.'; return; }
     socket.emit('joinRoom', { name, code });
   });
-
   socket.on('errorMsg', (msg) => { setupError.textContent = msg; });
-
   socket.on('joined', ({ code, youAreHost }) => {
-    myId = socket.id;
-    roomCode = code;
-    isHost = youAreHost;
-    setupError.textContent = '';
-    showLobby();
-  });
-
-  function showLobby() {
-    setupScreen.classList.add('hidden');
-    lobbyScreen.classList.remove('hidden');
+    myId = socket.id; roomCode = code; isHost = youAreHost; setupError.textContent = '';
+    setupScreen.classList.add('hidden'); lobbyScreen.classList.remove('hidden');
     lobbyCodeDisplay.textContent = roomCode;
-  }
-
-  socket.on('roomUpdate', (state) => {
-    roomState = state;
-    myId = socket.id; // bleibt über Verbindung stabil
-    isHost = state.hostId === socket.id;
-
-    if (!state.started) {
-      playerCountEl.textContent = state.players.length;
-      maxPlayerCountEl.textContent = state.maxPlayers;
-      renderLobbyPlayers(state.players);
-      hostControls.classList.toggle('hidden', !isHost);
-      guestWaitingMsg.classList.toggle('hidden', isHost);
-    } else {
-      updateGameUI();
-    }
   });
-
-  function renderLobbyPlayers(players) {
+  socket.on('roomUpdate', (s) => {
+    myId = socket.id; isHost = s.hostId === socket.id;
+    playerCountEl.textContent = s.players.length; maxPlayerCountEl.textContent = s.maxPlayers;
+    renderLobbyPlayers(s);
+    hostControls.classList.toggle('hidden', !isHost);
+    guestWaitingMsg.classList.toggle('hidden', isHost);
+  });
+  function renderLobbyPlayers(s) {
     lobbyPlayerList.innerHTML = '';
-    players.forEach(p => {
+    s.players.forEach(p => {
       const li = document.createElement('li');
       li.className = 'lobby-player-item';
-      li.innerHTML = `
-        <span><strong>${escapeHtml(p.name)}</strong> ${p.id === myId ? '(Du)' : ''}</span>
-        <span style="font-size: 12px; color: #94a3b8;">${p.id === roomState.hostId ? '👑 Raumeröffner' : 'Bereit'}</span>
-      `;
+      li.innerHTML = `<span><strong>${escapeHtml(p.name)}</strong> ${p.id === myId ? '(Du)' : ''}</span>
+        <span style="font-size: 12px; color: #94a3b8;">${p.id === s.hostId ? '👑 Raumeröffner' : 'Bereit'}</span>`;
       lobbyPlayerList.appendChild(li);
     });
   }
+  document.getElementById('start-game-btn').addEventListener('click', () => { if (isHost) socket.emit('startGame'); });
 
-  // ============ Spiel starten ============
-  startGameBtn.addEventListener('click', () => {
-    if (!isHost) return;
-    socket.emit('startGame');
+  socket.on('backToLobby', (s) => {
+    gameScreen.classList.add('hidden'); lobbyScreen.classList.remove('hidden');
+    lobbyCodeDisplay.textContent = s.code;
+    playerCountEl.textContent = s.players.length; maxPlayerCountEl.textContent = s.maxPlayers;
+    renderLobbyPlayers(s);
+    hostControls.classList.toggle('hidden', !isHost);
+    guestWaitingMsg.classList.toggle('hidden', isHost);
+    document.getElementById('log-box').innerHTML = '';
   });
 
-  socket.on('gameStarted', (state) => {
-    roomState = state;
-    lobbyScreen.classList.add('hidden');
-    gameScreen.classList.remove('hidden');
-    updateGameUI();
+  // --- Spielstart ---
+  socket.on('gameStarted', (s) => {
+    lobbyScreen.classList.add('hidden'); gameScreen.classList.remove('hidden');
+    state = s; renderGame();
   });
-
-  socket.on('yourClasses', (classes) => {
-    myClasses = classes;
-    updateGameUI();
-  });
-
+  socket.on('gameState', (s) => { state = s; renderGame(); });
+  socket.on('yourHand', (cards) => { myHand = cards; renderGame(); });
   socket.on('log', (msg) => {
+    const box = document.getElementById('log-box');
     const entry = document.createElement('div');
-    entry.className = 'log-entry';
-    entry.textContent = '> ' + msg;
-    logBox.prepend(entry);
+    entry.className = 'log-entry'; entry.textContent = '> ' + msg;
+    box.prepend(entry);
   });
+  socket.on('gameOver', ({ winnerName }) => { showGameOverModal(winnerName); });
 
-  socket.on('peerLeft', (peerId) => {
-    closePeerConnection(peerId);
-    const tile = document.getElementById('vt-' + peerId);
-    if (tile) tile.remove();
-  });
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function myPlayer() { return state ? state.players.find(p => p.id === myId) : null; }
+  function isMyTurn() {
+    if (!state) return false;
+    const ap = state.players[state.turnIndex];
+    return ap && ap.id === myId && !state.pending;
+  }
 
-  // ============ Spiel-UI ============
-  function updateGameUI() {
-    const me = roomState.players.find(p => p.id === myId);
+  function renderGame() {
+    if (!state) return;
+    const me = myPlayer();
     if (me) {
-      myNameDisplay.textContent = me.name;
-      myPositionDisplay.textContent = 'Nr. ' + (me.position ?? '-');
+      document.getElementById('my-name-display').textContent = me.name;
+      document.getElementById('my-position-display').textContent = me.position ?? '-';
+      document.getElementById('my-coins-display').textContent = me.coins + ' Münzen';
     }
-    myClassDisplay.innerHTML = myClasses.map(k => `${CLASSES[k].icon} <strong>${CLASSES[k].name}</strong>`).join(' &nbsp;/&nbsp; ') || '-';
+    const ap = state.players[state.turnIndex];
+    document.getElementById('current-player-turn').textContent = ap ? `Nr. ${ap.position}: ${ap.name}${ap.id === myId ? ' (Du)' : ''}` : '-';
 
-    const activePlayer = roomState.players[roomState.turnIndex];
-    if (activePlayer) {
-      currentPlayerTurnEl.textContent = `Nr. ${activePlayer.position}: ${activePlayer.name} ${activePlayer.id === myId ? '(Du)' : ''}`;
-    }
-
+    renderPendingArea();
     renderActions();
     renderPlayerGrid();
     maybeConnectToPeers();
   }
 
-  function isMyTurn() {
-    const activePlayer = roomState.players[roomState.turnIndex];
-    return roomState.started && activePlayer && activePlayer.id === myId;
-  }
-
+  // ---------- Aktionen ----------
   function renderActions() {
-    actionContainer.innerHTML = '';
+    const container = document.getElementById('action-container');
+    container.innerHTML = '';
+    if (!isMyTurn()) {
+      container.innerHTML = `<div class="waiting-note">${state.pending ? 'Eine Aktion wird gerade geklärt …' : 'Warte, bis du an der Reihe bist.'}</div>`;
+      return;
+    }
+    const me = myPlayer();
+    const forced = me.coins >= 10;
     Object.keys(ACTIONS).forEach(actionKey => {
       const def = ACTIONS[actionKey];
-      const isMyClass = def.classKey ? myClasses.includes(def.classKey) : null;
-
+      const isMyClass = def.classKey ? myHand.some(c => c.alive && c.role === def.classKey) : null;
       let cls = 'neutral-role', badgeCls = 'badge-neutral', badgeTxt = 'Frei';
-      if (def.classKey) {
-        cls = isMyClass ? 'real-role' : 'bluff-role';
-        badgeCls = isMyClass ? 'badge-real' : 'badge-bluff';
-        badgeTxt = isMyClass ? 'Echte Klasse' : 'Bluff';
-      }
+      if (def.classKey) { cls = isMyClass ? 'real-role' : 'bluff-role'; badgeCls = isMyClass ? 'badge-real' : 'badge-bluff'; badgeTxt = isMyClass ? 'Echte Klasse' : 'Bluff'; }
+
+      const disabled = (forced && actionKey !== 'staatsstreich') || (def.cost > 0 && me.coins < def.cost) ||
+                        (def.targeted && state.players.filter(p => !p.eliminated && p.id !== myId).length === 0);
 
       const btn = document.createElement('button');
       btn.className = `action-btn ${cls}`;
-      btn.disabled = !isMyTurn();
-      btn.innerHTML = `
-        <div>
-          <span>${def.label}</span>
-          <div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">${def.desc}</div>
-        </div>
-        <span class="badge ${badgeCls}">${badgeTxt}</span>
-      `;
+      btn.disabled = disabled;
+      btn.innerHTML = `<div><span>${def.label}</span><div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">${def.desc}</div></div>
+        <span class="badge ${badgeCls}">${badgeTxt}</span>`;
       btn.addEventListener('click', () => onActionClick(actionKey));
-      actionContainer.appendChild(btn);
+      container.appendChild(btn);
 
-      // Zielauswahl direkt unter dem Button, falls gerade aktiv
-      if (pendingTargetAction === actionKey) {
-        actionContainer.appendChild(buildTargetPanel(actionKey));
-      }
+      if (pendingTargetAction === actionKey) container.appendChild(buildTargetPanel(actionKey));
     });
+    if (forced) {
+      const w = document.createElement('div');
+      w.className = 'waiting-note'; w.style.color = 'var(--warn-color)';
+      w.textContent = '10+ Münzen: Du musst einen Coup ausführen.';
+      container.appendChild(w);
+    }
   }
-
   function onActionClick(actionKey) {
     const def = ACTIONS[actionKey];
-    if (def.needsTarget) {
+    if (def.targeted) {
       pendingTargetAction = (pendingTargetAction === actionKey) ? null : actionKey;
       renderActions();
       return;
     }
     socket.emit('declareAction', { actionKey });
   }
-
   function buildTargetPanel(actionKey) {
     const panel = document.createElement('div');
     panel.className = 'target-panel';
     panel.innerHTML = `<div class="target-panel-title">Ziel wählen:</div>`;
-    roomState.players.filter(p => p.id !== myId).forEach(p => {
+    state.players.filter(p => p.id !== myId && !p.eliminated).forEach(p => {
       const b = document.createElement('button');
       b.className = 'target-choice-btn';
-      b.textContent = `Nr. ${p.position} — ${p.name}`;
-      b.addEventListener('click', () => {
-        socket.emit('declareAction', { actionKey, targetId: p.id });
-        pendingTargetAction = null;
-      });
+      b.textContent = `Nr. ${p.position} — ${p.name} (${p.coins} Münzen, ${p.influence} Einfluss)`;
+      b.addEventListener('click', () => { socket.emit('declareAction', { actionKey, targetId: p.id }); pendingTargetAction = null; });
       panel.appendChild(b);
     });
     return panel;
   }
 
+  // ---------- Pending-Bereich (Anfechten/Blocken) ----------
+  function renderPendingArea() {
+    const area = document.getElementById('pending-area');
+    area.innerHTML = '';
+    if (!state.pending) return;
+    const p = state.pending;
+    const actor = state.players.find(pl => pl.id === p.actorId);
+    const target = p.targetId ? state.players.find(pl => pl.id === p.targetId) : null;
+    const def = ACTIONS[p.action];
+
+    const banner = document.createElement('div');
+    banner.className = 'pending-banner';
+
+    if (p.phase === 'response') {
+      banner.innerHTML = `<div class="ptitle">${actor.name} beansprucht „${def.label}"${target ? ` gegen ${target.name}` : ''}${def.classKey ? ` (behauptet: ${ROLES[def.classKey].name})` : ''}</div>`;
+      const amEligible = myId !== p.actorId && !p.responded.includes(myId) && state.players.find(pl=>pl.id===myId) && !state.players.find(pl=>pl.id===myId).eliminated;
+      if (amEligible) {
+        const row = document.createElement('div'); row.className = 'pending-actions';
+        if (def.challengeable) {
+          const cb = document.createElement('button'); cb.className = 'btn btn-danger btn-sm';
+          cb.textContent = 'Anfechten'; cb.onclick = () => socket.emit('respondChallenge'); row.appendChild(cb);
+        }
+        if (def.blockable && (def.blockEligibility === 'anyone' || p.targetId === myId)) {
+          def.blockRoles.forEach(rk => {
+            const bb = document.createElement('button'); bb.className = 'btn btn-warn btn-sm';
+            bb.textContent = `Blocken: ${ROLES[rk].name}`; bb.onclick = () => socket.emit('respondBlock', { role: rk }); row.appendChild(bb);
+          });
+        }
+        const pb = document.createElement('button'); pb.className = 'btn btn-sm';
+        pb.textContent = 'Passen'; pb.onclick = () => socket.emit('respondPass'); row.appendChild(pb);
+        banner.appendChild(row);
+      } else {
+        const waitingNames = state.players.filter(pl => pl.id !== p.actorId && !pl.eliminated && !p.responded.includes(pl.id)).map(pl => pl.name);
+        const note = document.createElement('div'); note.className = 'waiting-note';
+        note.textContent = myId === p.actorId ? `Warte auf Reaktion von: ${waitingNames.join(', ') || '...'}` : `Warte auf: ${waitingNames.join(', ') || '...'}`;
+        banner.appendChild(note);
+      }
+    } else if (p.phase === 'blockResponse') {
+      const blocker = state.players.find(pl => pl.id === p.block.playerId);
+      banner.innerHTML = `<div class="ptitle">${blocker.name} blockt mit ${ROLES[p.block.role].name}</div>`;
+      const amEligible = myId !== p.block.playerId && !p.blockResponded.includes(myId) && state.players.find(pl=>pl.id===myId) && !state.players.find(pl=>pl.id===myId).eliminated;
+      if (amEligible) {
+        const row = document.createElement('div'); row.className = 'pending-actions';
+        const cb = document.createElement('button'); cb.className = 'btn btn-danger btn-sm';
+        cb.textContent = 'Block anfechten'; cb.onclick = () => socket.emit('blockRespondChallenge'); row.appendChild(cb);
+        const pb = document.createElement('button'); pb.className = 'btn btn-sm';
+        pb.textContent = 'Akzeptieren'; pb.onclick = () => socket.emit('blockRespondPass'); row.appendChild(pb);
+        banner.appendChild(row);
+      } else {
+        const waitingNames = state.players.filter(pl => pl.id !== p.block.playerId && !pl.eliminated && !p.blockResponded.includes(pl.id)).map(pl => pl.name);
+        const note = document.createElement('div'); note.className = 'waiting-note';
+        note.textContent = `Warte auf: ${waitingNames.join(', ') || '...'}`;
+        banner.appendChild(note);
+      }
+    } else if (p.phase === 'loseInfluence') {
+      const wp = state.players.find(pl => pl.id === p.waitingOn);
+      banner.innerHTML = `<div class="waiting-note">${wp ? wp.name : '...'} muss eine Karte aufdecken …</div>`;
+    } else if (p.phase === 'exchange') {
+      const wp = state.players.find(pl => pl.id === p.waitingOn);
+      banner.innerHTML = `<div class="waiting-note">${wp ? wp.name : '...'} tauscht Karten …</div>`;
+    }
+    area.appendChild(banner);
+  }
+
+  // ---------- Spieler-Übersicht ----------
   function renderPlayerGrid() {
-    playerGrid.innerHTML = '';
-    const activePlayer = roomState.players[roomState.turnIndex];
-    roomState.players.forEach(p => {
+    const grid = document.getElementById('player-grid');
+    grid.innerHTML = '';
+    const ap = state.players[state.turnIndex];
+    state.players.forEach(p => {
       const card = document.createElement('div');
-      card.className = `player-card ${activePlayer && activePlayer.id === p.id ? 'active-turn' : ''}`;
+      card.className = `player-card ${ap && ap.id === p.id ? 'active-turn' : ''} ${p.eliminated ? 'eliminated' : ''}`;
       const isSelf = p.id === myId;
-      const displayClass = isSelf ? myClasses.map(k => CLASSES[k].icon + ' ' + CLASSES[k].name).join(', ') : '❓ Verdeckt';
+      let handHtml = '';
+      if (isSelf) {
+        handHtml = myHand.map(c => c.alive ? `<span title="verdeckt">${ROLES[c.role].icon} ${ROLES[c.role].name}</span>` : '').filter(Boolean).join(', ');
+      } else {
+        handHtml = Array(p.influence).fill('❓').join(' ');
+      }
+      const pips = Array.from({length: 2}).map((_, i) => `<div class="pip ${i < p.influence ? '' : 'dead'}"></div>`).join('');
+      const revealedHtml = p.revealed.length ? `<div class="revealed-roles">Aufgedeckt: ${p.revealed.map(r => ROLES[r].icon + ' ' + ROLES[r].name).join(', ')}</div>` : '';
       card.innerHTML = `
         <span class="position-badge">Nr. ${p.position}</span>
-        <div style="font-weight: bold; margin-bottom: 5px;">${escapeHtml(p.name)} ${isSelf ? '(Du)' : ''}</div>
-        <div style="font-size: 13px; color: #94a3b8;">Klassen: ${displayClass}</div>
+        <div style="font-weight: bold; margin-bottom: 4px;">${escapeHtml(p.name)} ${isSelf ? '(Du)' : ''} ${p.eliminated ? '☠️' : ''}</div>
+        <div class="coins-badge">${p.coins} Münzen</div>
+        <div class="influence-pips">${pips}</div>
+        <div style="font-size:12px; color:#94a3b8; margin-top:4px;">${handHtml}</div>
+        ${revealedHtml}
       `;
-      playerGrid.appendChild(card);
+      grid.appendChild(card);
     });
   }
 
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // ---------- Private Modals ----------
+  const modalRoot = document.getElementById('modal-root');
+  socket.on('chooseLoseCard', (roles) => {
+    modalRoot.innerHTML = '';
+    const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
+    const box = document.createElement('div'); box.className = 'modal-box';
+    box.innerHTML = `<h3>Du verlierst einen Einfluss</h3><p>Wähle, welche Karte du aufdeckst.</p>`;
+    const grid = document.createElement('div'); grid.className = 'role-choice-grid';
+    roles.forEach((role, i) => {
+      const c = document.createElement('div'); c.className = 'role-choice-card';
+      c.innerHTML = `<div class="ricon">${ROLES[role].icon}</div>${ROLES[role].name}`;
+      c.onclick = () => { socket.emit('confirmLoseCard', { index: i }); overlay.remove(); };
+      grid.appendChild(c);
+    });
+    box.appendChild(grid); overlay.appendChild(box); modalRoot.appendChild(overlay);
+  });
+
+  socket.on('chooseExchange', ({ current, drawn, keepCount }) => {
+    modalRoot.innerHTML = '';
+    const pool = current.concat(drawn);
+    let selected = [];
+    const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
+    const box = document.createElement('div'); box.className = 'modal-box';
+    box.innerHTML = `<h3>Karten tauschen</h3><p>Wähle ${keepCount} Karte(n), die du behalten möchtest.</p>`;
+    const grid = document.createElement('div'); grid.className = 'role-choice-grid';
+    pool.forEach((role, i) => {
+      const c = document.createElement('div'); c.className = 'role-choice-card';
+      c.innerHTML = `<div class="ricon">${ROLES[role].icon}</div>${ROLES[role].name}`;
+      c.onclick = () => {
+        if (selected.includes(i)) selected = selected.filter(x => x !== i);
+        else if (selected.length < keepCount) selected.push(i);
+        grid.querySelectorAll('.role-choice-card').forEach((el, idx) => el.classList.toggle('selected', selected.includes(idx)));
+        confirmBtn.disabled = selected.length !== keepCount;
+      };
+      grid.appendChild(c);
+    });
+    box.appendChild(grid);
+    const confirmBtn = document.createElement('button'); confirmBtn.className = 'btn btn-success'; confirmBtn.textContent = 'Bestätigen'; confirmBtn.disabled = true;
+    confirmBtn.onclick = () => { socket.emit('confirmExchange', { keepIndices: selected }); overlay.remove(); };
+    box.appendChild(confirmBtn);
+    overlay.appendChild(box); modalRoot.appendChild(overlay);
+  });
+
+  function showGameOverModal(winnerName) {
+    modalRoot.innerHTML = '';
+    const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
+    const box = document.createElement('div'); box.className = 'modal-box';
+    box.innerHTML = `<h3>🏆 ${winnerName ? escapeHtml(winnerName) + ' gewinnt!' : 'Spiel beendet'}</h3><p>Alle anderen Spieler haben ihren Einfluss verloren.</p>`;
+    if (isHost) {
+      const b = document.createElement('button'); b.className = 'btn btn-success'; b.textContent = 'Zurück zur Lobby';
+      b.onclick = () => { socket.emit('restartGame'); overlay.remove(); };
+      box.appendChild(b);
+    } else {
+      box.innerHTML += `<div class="waiting-note">Warte auf den Raumeröffner …</div>`;
+    }
+    overlay.appendChild(box); modalRoot.appendChild(overlay);
   }
 
   // ============ Webcam / Mikrofon (WebRTC-Mesh) ============
   let localStream = null;
-  const peerConnections = {}; // peerId -> RTCPeerConnection
+  const peerConnections = {};
   const camState = { enabled: false };
+  const camToggleBtn = document.getElementById('cam-toggle-btn');
+  const videoGrid = document.getElementById('video-grid');
 
   camToggleBtn.addEventListener('click', async () => {
     if (camState.enabled) {
       if (localStream) localStream.getTracks().forEach(t => t.stop());
-      localStream = null;
-      camState.enabled = false;
+      localStream = null; camState.enabled = false;
       camToggleBtn.textContent = 'Kamera/Mikro aktivieren';
-      const tile = document.getElementById('vt-local');
-      if (tile) tile.remove();
+      const tile = document.getElementById('vt-local'); if (tile) tile.remove();
       Object.keys(peerConnections).forEach(closePeerConnection);
       return;
     }
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    } catch (e) {
-      alert('Kamera/Mikrofon konnten nicht aktiviert werden: ' + e.message);
-      return;
-    }
-    camState.enabled = true;
-    camToggleBtn.textContent = 'Kamera/Mikro deaktivieren';
+    try { localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); }
+    catch (e) { alert('Kamera/Mikrofon konnten nicht aktiviert werden: ' + e.message); return; }
+    camState.enabled = true; camToggleBtn.textContent = 'Kamera/Mikro deaktivieren';
     addVideoTile('local', 'Du', localStream, true);
     maybeConnectToPeers();
   });
-
   function addVideoTile(id, label, stream, muted) {
     let tile = document.getElementById('vt-' + id);
     if (!tile) {
-      tile = document.createElement('div');
-      tile.className = 'video-tile';
-      tile.id = 'vt-' + id;
+      tile = document.createElement('div'); tile.className = 'video-tile'; tile.id = 'vt-' + id;
       tile.innerHTML = `<video autoplay playsinline ${muted ? 'muted' : ''}></video><span class="vlabel">${escapeHtml(label)}</span>`;
       videoGrid.appendChild(tile);
     }
     tile.querySelector('video').srcObject = stream;
   }
-
   function maybeConnectToPeers() {
-    if (!camState.enabled || !roomState.players) return;
-    roomState.players.forEach(p => {
-      if (p.id === myId) return;
+    if (!camState.enabled || !state || !state.players) return;
+    state.players.forEach(p => {
+      if (p.id === myId || p.eliminated) return;
       if (peerConnections[p.id]) return;
-      // Deterministische Regel, damit nicht beide gleichzeitig ein Offer schicken:
       if (myId < p.id) createPeerConnection(p.id, true, p.name);
       else createPeerConnection(p.id, false, p.name);
     });
   }
-
   function createPeerConnection(peerId, isInitiator, peerName) {
     const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
     peerConnections[peerId] = pc;
-
-    if (localStream) {
-      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-    }
-
-    pc.ontrack = (event) => {
-      addVideoTile(peerId, peerName || 'Mitspieler', event.streams[0], false);
-    };
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit('webrtc-signal', { to: peerId, data: { candidate: event.candidate } });
-      }
-    };
-
+    if (localStream) localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    pc.ontrack = (event) => addVideoTile(peerId, peerName || 'Mitspieler', event.streams[0], false);
+    pc.onicecandidate = (event) => { if (event.candidate) socket.emit('webrtc-signal', { to: peerId, data: { candidate: event.candidate } }); };
     if (isInitiator) {
       pc.onnegotiationneeded = async () => {
-        try {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          socket.emit('webrtc-signal', { to: peerId, data: { sdp: pc.localDescription } });
-        } catch (e) { console.error(e); }
+        try { const offer = await pc.createOffer(); await pc.setLocalDescription(offer); socket.emit('webrtc-signal', { to: peerId, data: { sdp: pc.localDescription } }); }
+        catch (e) { console.error(e); }
       };
     }
     return pc;
   }
-
   function closePeerConnection(peerId) {
-    const pc = peerConnections[peerId];
-    if (pc) { pc.close(); delete peerConnections[peerId]; }
-    const tile = document.getElementById('vt-' + peerId);
-    if (tile) tile.remove();
+    const pc = peerConnections[peerId]; if (pc) { pc.close(); delete peerConnections[peerId]; }
+    const tile = document.getElementById('vt-' + peerId); if (tile) tile.remove();
   }
-
   socket.on('webrtc-signal', async ({ from, data }) => {
     let pc = peerConnections[from];
-    if (!pc) {
-      const peer = roomState.players.find(p => p.id === from);
-      pc = createPeerConnection(from, false, peer ? peer.name : 'Mitspieler');
-    }
+    if (!pc) { const peer = state ? state.players.find(p => p.id === from) : null; pc = createPeerConnection(from, false, peer ? peer.name : 'Mitspieler'); }
     if (data.sdp) {
       await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-      if (data.sdp.type === 'offer') {
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket.emit('webrtc-signal', { to: from, data: { sdp: pc.localDescription } });
-      }
+      if (data.sdp.type === 'offer') { const answer = await pc.createAnswer(); await pc.setLocalDescription(answer); socket.emit('webrtc-signal', { to: from, data: { sdp: pc.localDescription } }); }
     } else if (data.candidate) {
       try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch (e) { console.error(e); }
     }
   });
+  socket.on('peerLeft', (peerId) => closePeerConnection(peerId));
 </script>
 </body>
 </html>
